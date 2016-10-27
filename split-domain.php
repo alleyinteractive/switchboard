@@ -22,3 +22,6 @@ require_once( PATH . '/lib/autoload.php' );
 
 // Singleton trait.
 require_once( PATH . '/lib/trait-singleton.php' );
+
+// Setup actions to autoload everything else.
+add_action( 'after_setup_theme', [ '\Split_Domain\Site', 'instance' ] );
