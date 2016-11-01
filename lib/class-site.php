@@ -31,7 +31,7 @@ class Site extends Taxonomy {
 	 * Setup the singleton.
 	 */
 	public function setup() {
-		$this->object_types = [ 'post', 'page', 'book', 'homepage' ];
+		$this->object_types = apply_filters( 'split_domain_post_types', [ 'post', 'page' ] );
 
 		parent::setup();
 	}
