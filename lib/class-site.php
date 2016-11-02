@@ -17,7 +17,7 @@ class Site extends Taxonomy {
 	 *
 	 * @var string
 	 */
-	public $name = 'site';
+	public $name = 'site-domain';
 
 	/**
 	 * Object types for this taxonomy.
@@ -32,6 +32,12 @@ class Site extends Taxonomy {
 	 */
 	public function setup() {
 		$this->object_types = apply_filters( 'split_domain_post_types', [ 'post', 'page' ] );
+		add_action( 'fm_post', [ $this, 'site_dropdown' ] );
+		add_action( 'edited_site-domain', [ $this, 'update_cache' ] );
+		add_action( 'created_site-domain', [ $this, 'update_cache' ] );
+		add_action( 'delete_site-domain', [ $this, 'update_cache' ] );
+
+		// @todo move menu item, use `dashicons-networking`.
 
 		parent::setup();
 	}
@@ -59,6 +65,56 @@ class Site extends Taxonomy {
 				'menu_name'             => __( 'Sites', 'split-domain' ),
 			],
 			'rewrite' => false,
+			'show_ui' => true,
+			'show_tagcloud' => false,
+			'show_admin_column' => true,
 		] );
+	}
+
+	/**
+	 * Set the site on posts. Replaces the default term meta box.
+	 *
+	 * @todo Make "Default" the first in the list.
+	 *
+	 * @param  string $post_type The current post type.
+	 */
+	public function site_dropdown( $post_type ) {
+		if ( ! in_array( $post_type, $this->object_types ) ) {
+			return;
+		}
+
+		$fm = new \Fieldmanager_Select( array(
+			'name' => $this->name,
+			'remove_default_meta_boxes' => true,
+			'first_empty' => true,
+			'datasource' => new \Fieldmanager_Datasource_Term( array(
+				'taxonomy' => $this->name,
+				'only_save_to_taxonomy' => true,
+			) ),
+		) );
+		$fm->add_meta_box( __( 'Site', 'split-domain' ), $this->object_types, 'side', 'high' );
+	}
+
+	/**
+	 * Update the site cache when terms are modified.
+	 */
+	public function update_cache() {
+		$terms = get_terms( [
+			'taxonomy'   => $this->name,
+			'hide_empty' => false,
+		] );
+
+		if ( ! $terms || is_wp_error( $terms ) ) {
+			return;
+		}
+
+		$cache = [];
+		foreach ( $terms as $term ) {
+			$cache[ $term->name ] = [ 'term_id' => $term->term_id, 'slug' => $term->slug ];
+		}
+		update_option( 'split_domain_sites', $cache );
+
+		// Unset the cached site term in the Core class.
+		Core::instance()->site_term = null;
 	}
 }
