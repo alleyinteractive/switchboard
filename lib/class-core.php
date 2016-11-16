@@ -130,8 +130,14 @@ class Core {
 	 * @return \WP_Term|false Term object on success, false on failure.
 	 */
 	public function get_default_site() {
-		// @todo make this a setting
-		return get_term( 190, Site::instance()->name );
+		$default_term_id = Settings::instance()->get_setting( 'default' );
+		if ( is_int( $default_term_id ) ) {
+			$term = get_term( $default_term_id, Site::instance()->name );
+			if ( $term && ! is_wp_error( $term ) ) {
+				return $term;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -143,6 +149,9 @@ class Core {
 			$post_site = $this->get_post_site();
 			if ( ! $post_site ) {
 				$post_site = $this->get_default_site();
+				if ( ! $post_site ) {
+					return;
+				}
 			}
 
 			$current_site = $this->get_current_site_term();
@@ -169,7 +178,7 @@ class Core {
 			$post_site = $this->get_default_site();
 		}
 
-		if ( false === strpos( $permalink, $post_site->name ) ) {
+		if ( ! empty( $post_site->name ) && false === strpos( $permalink, $post_site->name ) ) {
 			$permalink = str_replace( parse_url( home_url(), PHP_URL_HOST ), $post_site->name, $permalink );
 		}
 		return $permalink;
@@ -184,7 +193,7 @@ class Core {
 	public function admin_url( $url ) {
 		$site = $this->get_default_site();
 
-		if ( $site && false === strpos( $url, $site->name ) ) {
+		if ( ! empty( $site->name ) && false === strpos( $url, $site->name ) ) {
 			$url = str_replace( parse_url( site_url(), PHP_URL_HOST ), $site->name, $url );
 		}
 
@@ -205,7 +214,7 @@ class Core {
 		}
 
 		$site = $this->get_default_site();
-		if ( $site && false === strpos( $_SERVER['HTTP_HOST'], $site->name ) ) {
+		if ( ! empty( $site->name ) && false === strpos( $_SERVER['HTTP_HOST'], $site->name ) ) {
 			wp_redirect( 'http://' . $site->name . $_SERVER['REQUEST_URI'] );
 			exit();
 		}

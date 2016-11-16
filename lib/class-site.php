@@ -38,8 +38,41 @@ class Site extends Taxonomy {
 		add_action( 'delete_site-domain', [ $this, 'update_cache' ] );
 
 		// @todo move menu item, use `dashicons-networking`.
+		add_action( 'admin_menu', [ $this, 'admin_menu' ] );
+		add_action( 'admin_menu', [ $this, 'admin_submenus' ], 20 );
+		add_action( 'admin_head', [ $this, 'activate_parent_menu' ] );
 
 		parent::setup();
+	}
+
+	public function admin_menu() {
+		add_menu_page( _x( 'Domains', 'split domain menu item', 'split-domain' ), _x( 'Domains', 'split domain menu item', 'split-domain' ), 'manage_options', 'split-domain', '__return_false', 'dashicons-networking', '4.01' );
+		add_submenu_page( 'split-domain', __( 'Edit Domains', 'split-domain' ), __( 'Edit Domains', 'split-domain' ), 'manage_options', 'edit-tags.php?taxonomy=' . $this->name );
+	}
+
+	/**
+	 * Our top-level menu items are by themselves useless, so we have to remove the
+	 * blank links.
+	 */
+	function admin_submenus() {
+		global $submenu;
+		$remove_top_levels = [ 'split-domain' ];
+		foreach ( $remove_top_levels as $slug ) {
+			if ( isset( $submenu[ $slug ] ) ) {
+				array_shift( $submenu[ $slug ] );
+			}
+		}
+	}
+
+	/**
+	 * Highlight the parent menu if this submenu item is active.
+	 */
+	public function activate_parent_menu() {
+		global $parent_file, $submenu_file, $taxonomy;
+		if ( $this->name === $taxonomy ) {
+			$submenu_file = 'edit-tags.php?taxonomy=' . $taxonomy;
+			$parent_file = 'split-domain';
+		}
 	}
 
 	/**
@@ -68,6 +101,7 @@ class Site extends Taxonomy {
 			'show_ui' => true,
 			'show_tagcloud' => false,
 			'show_admin_column' => true,
+			'show_in_menu' => false,
 		] );
 	}
 
@@ -75,6 +109,7 @@ class Site extends Taxonomy {
 	 * Set the site on posts. Replaces the default term meta box.
 	 *
 	 * @todo Make "Default" the first in the list.
+	 * @todo Remove dependence on Fieldmanager
 	 *
 	 * @param  string $post_type The current post type.
 	 */
@@ -83,10 +118,9 @@ class Site extends Taxonomy {
 			return;
 		}
 
-		$fm = new \Fieldmanager_Select( array(
+		$fm = new \Fieldmanager_Checkboxes( array(
 			'name' => $this->name,
 			'remove_default_meta_boxes' => true,
-			'first_empty' => true,
 			'datasource' => new \Fieldmanager_Datasource_Term( array(
 				'taxonomy' => $this->name,
 				'only_save_to_taxonomy' => true,
