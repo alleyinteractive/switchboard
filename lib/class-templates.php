@@ -23,7 +23,9 @@ class Templates {
 		 * You can prefix any string by calling
 		 * `apply_filters( 'split_domain_prefix', $thing )`. For example:
 		 *
-		 *    get_header( apply_filters( 'split_domain_prefix', null ) );
+		 * ```php
+		 * get_header( apply_filters( 'split_domain_prefix', null ) );
+		 * ```
 		 *
 		 * This will load header-{domain slug}.php if it exists, and header.php
 		 * otherwise.

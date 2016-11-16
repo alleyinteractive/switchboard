@@ -1,6 +1,8 @@
 <?php
 /**
  * This file contains the singleton class for Settings.
+ *
+ * @package  Split Domain
  */
 
 namespace Split_Domain;
@@ -11,6 +13,11 @@ namespace Split_Domain;
 class Settings {
 	use Singleton;
 
+	/**
+	 * The option_name in which to store these settings.
+	 *
+	 * @var string
+	 */
 	protected $option_name = 'site_domain_settings';
 
 	/**
@@ -41,6 +48,12 @@ class Settings {
 		$fm->activate_submenu_page();
 	}
 
+	/**
+	 * Get the settings or an individual setting.
+	 *
+	 * @param  string $key Optional. If set, the sub-setting to retrieve.
+	 * @return mixed
+	 */
 	public function get_setting( $key = null ) {
 		$settings = get_option( $this->option_name, [] );
 
