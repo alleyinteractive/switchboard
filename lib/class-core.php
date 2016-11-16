@@ -175,8 +175,8 @@ class Core {
 	 * Get the 'site-domain' WP_Term for a given (or the current) post.
 	 *
 	 * @param  \WP_Post|int $post Optional. Post object or ID.
-	 * @param  string $prefer Optional. Which site to prefer, the 'primary' or
-	 *                        the 'current'. Defaults to 'current'.
+	 * @param  string       $prefer Optional. Which site to prefer, the 'primary'
+	 *                              or the 'current'. Defaults to 'current'.
 	 * @return \WP_Term|false Term object on success, false on failure.
 	 */
 	public static function get_post_site( $post = null, $prefer = 'current' ) {
@@ -273,7 +273,7 @@ class Core {
 	 * `get_canonical_url` and differs from `post_link()` in that it will only
 	 * change the URL if the URL's domain is not the post's primary domain.
 	 *
-	 * @param  string $permalink URL.
+	 * @param  string       $permalink URL.
 	 * @param  int|\WP_Post $post Post object or ID.
 	 * @return string URL.
 	 */
