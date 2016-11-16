@@ -45,6 +45,9 @@ class Site extends Taxonomy {
 		parent::setup();
 	}
 
+	/**
+	 * Modify the admin menu to make Domains top-level.
+	 */
 	public function admin_menu() {
 		add_menu_page( _x( 'Domains', 'split domain menu item', 'split-domain' ), _x( 'Domains', 'split domain menu item', 'split-domain' ), 'manage_options', 'split-domain', '__return_false', 'dashicons-networking', '4.01' );
 		add_submenu_page( 'split-domain', __( 'Edit Domains', 'split-domain' ), __( 'Edit Domains', 'split-domain' ), 'manage_options', 'edit-tags.php?taxonomy=' . $this->name );
@@ -70,8 +73,8 @@ class Site extends Taxonomy {
 	public function activate_parent_menu() {
 		global $parent_file, $submenu_file, $taxonomy;
 		if ( $this->name === $taxonomy ) {
-			$submenu_file = 'edit-tags.php?taxonomy=' . $taxonomy;
-			$parent_file = 'split-domain';
+			$submenu_file = 'edit-tags.php?taxonomy=' . $taxonomy; // WPCS: override ok.
+			$parent_file = 'split-domain'; // WPCS: override ok.
 		}
 	}
 

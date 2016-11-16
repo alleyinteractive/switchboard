@@ -26,13 +26,13 @@ class Core {
 	public function setup() {
 		add_action( 'template_redirect', [ $this, 'redirects' ] );
 
-		// Filter permalinks
+		// Filter permalinks.
 		add_filter( 'post_link',       [ $this, 'post_link' ], 10, 2 );
 		add_filter( 'page_link',       [ $this, 'post_link' ], 10, 2 );
 		add_filter( 'attachment_link', [ $this, 'post_link' ], 10, 2 );
 		add_filter( 'post_type_link',  [ $this, 'post_link' ], 10, 2 );
 
-		// Filter admin urls
+		// Filter admin urls.
 		add_filter( 'admin_url', [ $this, 'admin_url' ] );
 		add_action( 'admin_init', [ $this, 'admin_redirect' ] );
 	}
@@ -47,7 +47,7 @@ class Core {
 	public function get_current_site_term( $property = null ) {
 		if ( ! isset( $this->site_term ) ) {
 			if ( ! in_array( $property, [ 'slug', 'term_id', 'name' ] ) && ! did_action( 'init' ) ) {
-				_doing_it_wrong( __METHOD__, __( 'You cannot use this method that way before "init" because taxonomies have not been registered yet. You can only get the term_id, slug, or name of the term this early.', 'split-domain' ), '4.6.0' );
+				_doing_it_wrong( __METHOD__, esc_html__( 'You cannot use this method that way before "init" because taxonomies have not been registered yet. You can only get the term_id, slug, or name of the term this early.', 'split-domain' ), '4.6.0' );
 				return false;
 			}
 
@@ -168,7 +168,7 @@ class Core {
 	 * Set the correct domain in permalinks. This is a hook for all filters
 	 * stemming from `get_permalink()`.
 	 *
-	 * @param  string $permalink URL.
+	 * @param  string       $permalink URL.
 	 * @param  int|\WP_Post $post Post object or ID.
 	 * @return string URL.
 	 */
@@ -207,6 +207,7 @@ class Core {
 	public function admin_redirect() {
 		if (
 			! isset( $_SERVER['HTTP_HOST'] )
+			|| ! isset( $_SERVER['REQUEST_URI'] )
 			|| defined( 'DOING_AJAX' ) && DOING_AJAX
 			|| ! apply_filters( 'split_domain_redirect_admin_domain', true )
 		) {
@@ -214,8 +215,8 @@ class Core {
 		}
 
 		$site = $this->get_default_site();
-		if ( ! empty( $site->name ) && false === strpos( $_SERVER['HTTP_HOST'], $site->name ) ) {
-			wp_redirect( 'http://' . $site->name . $_SERVER['REQUEST_URI'] );
+		if ( ! empty( $site->name ) && false === strpos( $_SERVER['HTTP_HOST'], $site->name ) ) { // WPCS: sanitization ok.
+			wp_redirect( esc_url_raw( 'http://' . $site->name . $_SERVER['REQUEST_URI'] ) ); // WPCS: sanitization ok.
 			exit();
 		}
 	}
