@@ -300,7 +300,7 @@ class Core {
 		$site = $this->get_default_site();
 
 		if ( ! empty( $site->name ) && false === strpos( $url, $site->name ) ) {
-			$url = str_replace( parse_url( site_url(), PHP_URL_HOST ), $site->name, $url );
+			$url = str_replace( parse_url( home_url(), PHP_URL_HOST ), $site->name, $url );
 		}
 
 		return $url;
