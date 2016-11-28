@@ -27,10 +27,11 @@ class Core {
 		add_action( 'template_redirect', [ $this, 'redirects' ] );
 
 		// Filter permalinks.
-		add_filter( 'post_link',       [ $this, 'post_link' ], 10, 2 );
-		add_filter( 'page_link',       [ $this, 'post_link' ], 10, 2 );
-		add_filter( 'attachment_link', [ $this, 'post_link' ], 10, 2 );
-		add_filter( 'post_type_link',  [ $this, 'post_link' ], 10, 2 );
+		add_filter( 'post_link',         [ $this, 'post_link' ],     10, 2 );
+		add_filter( 'page_link',         [ $this, 'post_link' ],     10, 2 );
+		add_filter( 'attachment_link',   [ $this, 'post_link' ],     10, 2 );
+		add_filter( 'post_type_link',    [ $this, 'post_link' ],     10, 2 );
+		add_filter( 'get_canonical_url', [ $this, 'canonical_url' ], 10, 2 );
 
 		// Filter admin urls.
 		add_filter( 'admin_url', [ $this, 'admin_url' ] );
@@ -92,7 +93,7 @@ class Core {
 	 *     @type string $slug The site's term slug.
 	 * }
 	 */
-	public function get_current_site_from_cache() {
+	public static function get_current_site_from_cache() {
 		$domains = get_option( 'split_domain_sites', [] );
 		if ( empty( $domains ) ) {
 			return;
@@ -109,19 +110,102 @@ class Core {
 	}
 
 	/**
-	 * Get the 'site-domain' WP_Term for a given (or the current) post.
+	 * Get the primary site for a given (or the current) post.
 	 *
-	 * @param  \WP_Post|int $post Post object or ID.
-	 * @return \WP_Term|false Term object on success, false on failure.
+	 * @param  \WP_Post|int $post Optional. Post object or ID.
+	 * @return \WP_Term|false Term object on success, false otherwise.
 	 */
-	public function get_post_site( $post = null ) {
+	public static function get_post_primary_site( $post = null ) {
 		$post = get_post( $post );
+		if ( $post ) {
+			// First check if we have a (valid) primary domain.
+			$post_domains = get_post_meta( $post->ID, 'post_domains', true );
+			if ( ! empty( $post_domains['primary'] ) ) {
+				$site = get_term( $post_domains['primary'], Site::instance()->name );
+				if ( $site && ! is_wp_error( $site ) && ! empty( $site->term_id ) ) {
+					return $site;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get the 'site-domain' WP_Term objects for a given (or the current) post.
+	 *
+	 * @param  \WP_Post|int $post Optional. Post object or ID.
+	 * @return array \WP_Term objects.
+	 */
+	public static function get_sites_for_post( $post = null ) {
+		$post = get_post( $post );
+		if ( ! $post ) {
+			return [];
+		}
+
 		$sites = get_the_terms( $post, Site::instance()->name );
 		if ( is_wp_error( $sites ) || empty( $sites ) ) {
-			return false;
+			return [];
 		} else {
+			return $sites;
+		}
+	}
+
+	/**
+	 * Is the given or current post allowed on the current site?
+	 *
+	 * @param  \WP_Post|int $post Optional. Post object or ID.
+	 * @return bool True if yes, false if no.
+	 */
+	public static function is_post_allowed_on_current_site( $post = null ) {
+		$sites = self::get_sites_for_post( $post );
+
+		// First check if the current site is in the list and prefer that.
+		$current_site_id = intval( self::instance()->get_current_site_term( 'term_id' ) );
+		foreach ( $sites as $site ) {
+			if ( intval( $site->term_id ) === $current_site_id ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get the 'site-domain' WP_Term for a given (or the current) post.
+	 *
+	 * @param  \WP_Post|int $post Optional. Post object or ID.
+	 * @param  string       $prefer Optional. Which site to prefer, the 'primary'
+	 *                              or the 'current'. Defaults to 'current'.
+	 * @return \WP_Term|false Term object on success, false on failure.
+	 */
+	public static function get_post_site( $post = null, $prefer = 'current' ) {
+		// Sometimes we'll prefer the primary domain for a post, and sometimes
+		// we'll prefer the current domain.
+		$order = 'primary' === $prefer ? [ 'primary', 'current' ] : [ 'current', 'primary' ];
+		foreach ( $order as $check ) {
+			if ( 'primary' === $check ) {
+				$primary = self::get_post_primary_site( $post );
+				if ( $primary ) {
+					return $primary;
+				}
+			} else {
+				if ( self::is_post_allowed_on_current_site( $post ) ) {
+					return self::instance()->get_current_site_term();
+				}
+			}
+		}
+
+		// If we've made it this far, the post doesn't have a primary domain
+		// and it's not part of the current site. The next in line is any
+		// allowed site.
+		$sites = self::get_sites_for_post( $post );
+		if ( ! empty( $sites ) ) {
 			return reset( $sites );
 		}
+
+		// If all else fails, return the default site.
+		return self::get_default_site();
 	}
 
 	/**
@@ -129,7 +213,7 @@ class Core {
 	 *
 	 * @return \WP_Term|false Term object on success, false on failure.
 	 */
-	public function get_default_site() {
+	public static function get_default_site() {
 		$default_term_id = Settings::instance()->get_setting( 'default' );
 		if ( is_int( $default_term_id ) ) {
 			$term = get_term( $default_term_id, Site::instance()->name );
@@ -173,7 +257,7 @@ class Core {
 	 * @return string URL.
 	 */
 	public function post_link( $permalink, $post ) {
-		$post_site = $this->get_post_site( $post );
+		$post_site = $this->get_post_site( $post, ( is_admin() ? 'primary' : 'current' ) );
 		if ( ! $post_site ) {
 			$post_site = $this->get_default_site();
 		}
@@ -181,6 +265,28 @@ class Core {
 		if ( ! empty( $post_site->name ) && false === strpos( $permalink, $post_site->name ) ) {
 			$permalink = str_replace( parse_url( home_url(), PHP_URL_HOST ), $post_site->name, $permalink );
 		}
+		return $permalink;
+	}
+
+	/**
+	 * Set the correct domain in canonical urls. This is a hook for
+	 * `get_canonical_url` and differs from `post_link()` in that it will only
+	 * change the URL if the URL's domain is not the post's primary domain.
+	 *
+	 * @param  string       $permalink URL.
+	 * @param  int|\WP_Post $post Post object or ID.
+	 * @return string URL.
+	 */
+	public function canonical_url( $permalink, $post ) {
+		$post_site = $this->get_post_primary_site( $post );
+		if (
+			$post_site
+			&& ! empty( $post_site->name )
+			&& false === strpos( $permalink, $post_site->name )
+		) {
+			$permalink = str_replace( parse_url( $permalink, PHP_URL_HOST ), $post_site->name, $permalink );
+		}
+
 		return $permalink;
 	}
 
@@ -194,7 +300,7 @@ class Core {
 		$site = $this->get_default_site();
 
 		if ( ! empty( $site->name ) && false === strpos( $url, $site->name ) ) {
-			$url = str_replace( parse_url( site_url(), PHP_URL_HOST ), $site->name, $url );
+			$url = str_replace( parse_url( home_url(), PHP_URL_HOST ), $site->name, $url );
 		}
 
 		return $url;

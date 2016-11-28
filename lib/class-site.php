@@ -121,14 +121,26 @@ class Site extends Taxonomy {
 			return;
 		}
 
-		$fm = new \Fieldmanager_Checkboxes( array(
-			'name' => $this->name,
-			'remove_default_meta_boxes' => true,
-			'datasource' => new \Fieldmanager_Datasource_Term( array(
-				'taxonomy' => $this->name,
-				'only_save_to_taxonomy' => true,
-			) ),
-		) );
+		$fm = new \Fieldmanager_Group( [
+			'name' => 'post_domains',
+			'children' => [
+				'allowed' => new \Fieldmanager_Checkboxes( [
+					'label' => __( 'Allow on these domains:', 'split-domain' ),
+					'remove_default_meta_boxes' => true,
+					'datasource' => new \Fieldmanager_Datasource_Term( [
+						'taxonomy' => $this->name,
+						'only_save_to_taxonomy' => true,
+					] ),
+				] ),
+				'primary' => new \Fieldmanager_Select( [
+					'label' => __( 'Primary Domain:', 'split-domain' ),
+					'default_value' => Settings::instance()->get_setting( 'default' ),
+					'datasource' => new \Fieldmanager_Datasource_Term( [
+						'taxonomy' => $this->name,
+					] ),
+				] ),
+			],
+		] );
 		$fm->add_meta_box( __( 'Site', 'split-domain' ), $this->object_types, 'side', 'high' );
 	}
 
