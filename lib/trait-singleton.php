@@ -35,6 +35,6 @@ trait Singleton {
 	 * Setup the singleton.
 	 */
 	public function setup() {
-		// Silence
+		// Silence.
 	}
 }

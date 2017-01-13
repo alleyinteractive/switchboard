@@ -9,7 +9,7 @@ module.exports = function( grunt ) {
 
 		addtextdomain: {
 			options: {
-				textdomain: 'replace-me',
+				textdomain: 'split-domain',
 			},
 			target: {
 				files: {
@@ -30,9 +30,9 @@ module.exports = function( grunt ) {
 			target: {
 				options: {
 					domainPath: '/languages',
-					mainFile: 'replace-me.php',
+					mainFile: 'split-domain.php',
 					exclude: [ 'tests', 'node_modules', 'vendor', 'bin' ],
-					potFilename: 'replace-me.pot',
+					potFilename: 'split-domain.pot',
 					potHeaders: {
 						poedit: true,
 						'x-poedit-keywordslist': true

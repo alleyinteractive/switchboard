@@ -2,7 +2,7 @@
 /**
  * Class SampleTest
  *
- * @package Replace Me
+ * @package Split Domain
  */
 
 /**

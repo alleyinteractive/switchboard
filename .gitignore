@@ -3,3 +3,5 @@ Thumbs.db
 /.idea
 wp-cli.local.yml
 node_modules/
+/composer.lock
+/vendor
