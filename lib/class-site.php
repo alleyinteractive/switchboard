@@ -164,7 +164,10 @@ class Site extends Taxonomy {
 
 		$cache = [];
 		foreach ( $terms as $term ) {
-			$cache[ $term->name ] = [ 'term_id' => $term->term_id, 'slug' => $term->slug ];
+			$cache[ $term->name ] = [
+				'term_id' => $term->term_id,
+				'slug' => $term->slug,
+			];
 		}
 		update_option( 'split_domain_sites', $cache );
 
@@ -244,7 +247,7 @@ class Site extends Taxonomy {
 	 * `wp_update_term()` offers no way to gracefully reject changes.
 	 *
 	 * @param  array  $data     Term data.
-	 * @param  int    $term_id  Term ID
+	 * @param  int    $term_id  Term ID.
 	 * @param  string $taxonomy Taxonomy slug.
 	 * @return array            Term data.
 	 */
