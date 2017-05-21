@@ -229,7 +229,7 @@ class Site extends Taxonomy {
 	 */
 	public function santize_term_data( $term, $taxonomy ) {
 		if ( $this->name === $taxonomy ) {
-			$term = $this->validate_domain( $domain );
+			$term = $this->validate_domain( $term );
 			if ( ! $term ) {
 				return new \WP_Error( 'invalid-domain', __( 'Invalid domain. The domain should be of the form "example.com" or "www.example.com"', 'split-domain' ) );
 			}
