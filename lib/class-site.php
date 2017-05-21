@@ -211,7 +211,7 @@ class Site extends Taxonomy {
 		if (
 			empty( $domain )
 			|| ! filter_var( $domain_full, FILTER_VALIDATE_URL )
-			|| ! preg_match( '/^\w+(\.\w+)$/', $domain )
+			|| ! preg_match( '/^[-_\w]+(\.[-_\w]+)+$/', $domain )
 		) {
 			return false;
 		}
