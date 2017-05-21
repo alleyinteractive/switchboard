@@ -37,10 +37,15 @@ class Site extends Taxonomy {
 		add_action( 'created_site-domain', [ $this, 'update_cache' ] );
 		add_action( 'delete_site-domain', [ $this, 'update_cache' ] );
 
-		// @todo move menu item, use `dashicons-networking`.
 		add_action( 'admin_menu', [ $this, 'admin_menu' ] );
 		add_action( 'admin_menu', [ $this, 'admin_submenus' ], 20 );
 		add_action( 'admin_head', [ $this, 'activate_parent_menu' ] );
+
+		add_action( 'admin_print_footer_scripts-edit-tags.php', [ $this, 'ui_override_script' ] );
+		add_action( 'admin_print_footer_scripts-term.php', [ $this, 'ui_override_script' ] );
+
+		add_filter( 'pre_insert_term', [ $this, 'santize_term_data' ], 10, 2 );
+		add_filter( 'wp_update_term_data', [ $this, 'prevent_invalid_domains_on_edit' ], 10, 3 );
 
 		parent::setup();
 	}
@@ -165,5 +170,97 @@ class Site extends Taxonomy {
 
 		// Unset the cached site term in the Core class.
 		Core::instance()->site_term = null;
+	}
+
+	/**
+	 * UI Overrides for the new/edit term screens for this taxonomy.
+	 */
+	public function ui_override_script() {
+		global $taxnow;
+		if ( $taxnow && $this->name === $taxnow ) :
+			?>
+			<script type="text/javascript">
+			jQuery( function( $ ) {
+				$('.term-name-wrap label,.manage-column.column-name > a > span:first-child').text( <?php echo wp_json_encode( __( 'Domain', 'split-domain' ) ) ?> );
+				$('#tag-name').attr( 'placeholder', 'domain.com' );
+				$('.term-name-wrap p').text( <?php echo wp_json_encode( __( 'The domain, without the protocol (http://) and without a slash at the end. Be sure to include the "www." if the domain will use that.', 'split-domain' ) ) ?> );
+				$('.term-slug-wrap p').text( <?php echo wp_json_encode( __( 'The slug is used for templating. It should be all lowercase and contain only letters, numbers, and hyphens.', 'split-domain' ) ) ?> );
+				$('.term-description-wrap p').text( <?php echo wp_json_encode( __( 'The description is used for internal notes.', 'split-domain' ) ) ?> );
+			});
+			</script>
+			<?php
+		endif;
+	}
+
+	/**
+	 * Validate and normalize a domain string.
+	 *
+	 * @param  string $domain Domain.
+	 * @return string|false   Domain, normalized, if valid; false if invalid.
+	 */
+	protected function validate_domain( $domain ) {
+		$domain = strtolower( $domain );
+		$domain_full = $domain;
+
+		// Prepend protocol for URL validation.
+		if ( ! preg_match( '#^https?://#i', $domain_full ) ) {
+			$domain_full = 'http://' . $domain_full;
+		}
+		$domain = parse_url( $domain_full, PHP_URL_HOST );
+
+		if (
+			empty( $domain )
+			|| ! filter_var( $domain_full, FILTER_VALIDATE_URL )
+			|| ! preg_match( '/^\w+(\.\w+)$/', $domain )
+		) {
+			return false;
+		}
+
+		return $domain;
+	}
+
+	/**
+	 * Prevent terms in this taxonomy from being created if the `name` is not a
+	 * valid domain.
+	 *
+	 * @param  string $term     Term name.
+	 * @param  string $taxonomy Taxonomy slug.
+	 * @return string           Term name.
+	 */
+	public function santize_term_data( $term, $taxonomy ) {
+		if ( $this->name === $taxonomy ) {
+			$term = $this->validate_domain( $domain );
+			if ( ! $term ) {
+				return new \WP_Error( 'invalid-domain', __( 'Invalid domain. The domain should be of the form "example.com" or "www.example.com"', 'split-domain' ) );
+			}
+		}
+
+		return $term;
+	}
+
+	/**
+	 * Prevent `wp_update_term()` from setting an invalid `name` for this
+	 * taxonomy. This method will call `wp_die()` if the name is invalid, since
+	 * `wp_update_term()` offers no way to gracefully reject changes.
+	 *
+	 * @param  array  $data     Term data.
+	 * @param  int    $term_id  Term ID
+	 * @param  string $taxonomy Taxonomy slug.
+	 * @return array            Term data.
+	 */
+	public function prevent_invalid_domains_on_edit( $data, $term_id, $taxonomy ) {
+		global $wp_list_table;
+		if (
+			$this->name === $taxonomy
+			&& $wp_list_table
+			&& 'editedtag' === $wp_list_table->current_action()
+		) {
+			$term = $this->validate_domain( $data['name'] );
+			if ( ! $term ) {
+				wp_die( esc_html__( 'Invalid domain. The domain should be of the form "example.com" or "www.example.com". Please go back and enter a new domain.', 'split-domain' ) );
+			}
+		}
+
+		return $data;
 	}
 }
