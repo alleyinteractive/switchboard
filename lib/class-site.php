@@ -206,13 +206,15 @@ class Site extends Taxonomy {
 		$domain_full = $domain;
 
 		// Prepend protocol for URL validation.
-		if ( ! preg_match( '#^https?://#i', $domain_full ) ) {
+		if ( ! preg_match( '#^https?://#', $domain_full ) ) {
 			$domain_full = 'http://' . $domain_full;
 		}
 		$domain = parse_url( $domain_full, PHP_URL_HOST );
 
 		if (
 			empty( $domain )
+			// @todo Need another option; this will fail on URLs that contain
+			// multibyte characters.
 			|| ! filter_var( $domain_full, FILTER_VALIDATE_URL )
 			|| ! preg_match( '/^[-_\w]+(\.[-_\w]+)+$/', $domain )
 		) {
@@ -255,7 +257,7 @@ class Site extends Taxonomy {
 		global $wp_list_table;
 		if (
 			$this->name === $taxonomy
-			&& $wp_list_table
+			&& $wp_list_table instanceof WP_List_Table
 			&& 'editedtag' === $wp_list_table->current_action()
 		) {
 			$term = $this->validate_domain( $data['name'] );
