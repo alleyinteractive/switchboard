@@ -34,16 +34,18 @@ class Settings {
 	 * `site_domain_settings` Fieldmanager fields.
 	 */
 	public function fields() {
+		$children = array(
+			'default' => new \Fieldmanager_Select( array(
+				'label' => __( 'Default Domain', 'split-domain' ),
+				'datasource' => new \Fieldmanager_Datasource_Term( array(
+					'taxonomy' => Site::instance()->name,
+				) ),
+			) ),
+		);
+
 		$fm = new \Fieldmanager_Group( array(
 			'name' => $this->option_name,
-			'children' => array(
-				'default' => new \Fieldmanager_Select( array(
-					'label' => __( 'Default Domain', 'split-domain' ),
-					'datasource' => new \Fieldmanager_Datasource_Term( array(
-						'taxonomy' => Site::instance()->name,
-					) ),
-				) ),
-			),
+			'children' => apply_filters( 'site_domain_settings_children_fields', $children ),
 		) );
 		$fm->activate_submenu_page();
 	}
