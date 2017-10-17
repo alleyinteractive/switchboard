@@ -184,11 +184,11 @@ class Site extends Taxonomy {
 			?>
 			<script type="text/javascript">
 			jQuery( function( $ ) {
-				$('.term-name-wrap label,.manage-column.column-name > a > span:first-child').text( <?php echo wp_json_encode( __( 'Domain', 'switchboard' ) ) ?> );
+				$('.term-name-wrap label,.manage-column.column-name > a > span:first-child').text( <?php echo wp_json_encode( __( 'Domain', 'switchboard' ) ); ?> );
 				$('#tag-name').attr( 'placeholder', 'domain.com' );
-				$('.term-name-wrap p').text( <?php echo wp_json_encode( __( 'The domain, without the protocol (http://) and without a slash at the end. Be sure to include the "www." if the domain will use that.', 'switchboard' ) ) ?> );
-				$('.term-slug-wrap p').text( <?php echo wp_json_encode( __( 'The slug is used for templating. It should be all lowercase and contain only letters, numbers, and hyphens.', 'switchboard' ) ) ?> );
-				$('.term-description-wrap p').text( <?php echo wp_json_encode( __( 'The description is used for internal notes.', 'switchboard' ) ) ?> );
+				$('.term-name-wrap p').text( <?php echo wp_json_encode( __( 'The domain, without the protocol (http://) and without a slash at the end. Be sure to include the "www." if the domain will use that.', 'switchboard' ) ); ?> );
+				$('.term-slug-wrap p').text( <?php echo wp_json_encode( __( 'The slug is used for templating. It should be all lowercase and contain only letters, numbers, and hyphens.', 'switchboard' ) ); ?> );
+				$('.term-description-wrap p').text( <?php echo wp_json_encode( __( 'The description is used for internal notes.', 'switchboard' ) ); ?> );
 			});
 			</script>
 			<?php
