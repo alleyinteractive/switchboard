@@ -2,10 +2,10 @@
 /**
  * Trait file for Singletons.
  *
- * @package Split Domain
+ * @package Switchboard
  */
 
-namespace Split_Domain;
+namespace Switchboard;
 
 /**
  * Make a class into a singleton.

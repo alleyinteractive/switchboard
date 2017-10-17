@@ -9,7 +9,7 @@ module.exports = function( grunt ) {
 
 		addtextdomain: {
 			options: {
-				textdomain: 'split-domain',
+				textdomain: 'switchboard',
 			},
 			target: {
 				files: {
@@ -30,9 +30,9 @@ module.exports = function( grunt ) {
 			target: {
 				options: {
 					domainPath: '/languages',
-					mainFile: 'split-domain.php',
+					mainFile: 'switchboard.php',
 					exclude: [ 'tests', 'node_modules', 'vendor', 'bin' ],
-					potFilename: 'split-domain.pot',
+					potFilename: 'switchboard.pot',
 					potHeaders: {
 						poedit: true,
 						'x-poedit-keywordslist': true

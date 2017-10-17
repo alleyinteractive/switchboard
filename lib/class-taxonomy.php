@@ -2,10 +2,10 @@
 /**
  * This file defines the abstract Taxonomy class.
  *
- * @package Split Domain
+ * @package Switchboard
  */
 
-namespace Split_Domain;
+namespace Switchboard;
 
 /**
  * Abstract class for taxonomy classes.

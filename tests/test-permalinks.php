@@ -1,10 +1,10 @@
 <?php
-namespace Split_Domain;
+namespace Switchboard;
 
 /**
  * Test permalinks.
  *
- * @package Split Domain
+ * @package Switchboard
  */
 
 class PermalinksTest extends \WP_UnitTestCase {

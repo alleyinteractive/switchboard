@@ -2,10 +2,10 @@
 /**
  * This file contains the singleton class for Settings.
  *
- * @package  Split Domain
+ * @package  Switchboard
  */
 
-namespace Split_Domain;
+namespace Switchboard;
 
 /**
  * Settings
@@ -26,7 +26,7 @@ class Settings {
 	public function setup() {
 		add_action( 'fm_submenu_site_domain_settings', [ $this, 'fields' ] );
 		if ( function_exists( 'fm_register_submenu_page' ) ) {
-			fm_register_submenu_page( $this->option_name, 'split-domain', __( 'Site Domain Settings', 'split-domain' ), __( 'Settings', 'split-domain' ), 'manage_options' );
+			fm_register_submenu_page( $this->option_name, 'switchboard', __( 'Site Domain Settings', 'switchboard' ), __( 'Settings', 'switchboard' ), 'manage_options' );
 		}
 	}
 
@@ -36,7 +36,7 @@ class Settings {
 	public function fields() {
 		$children = array(
 			'default' => new \Fieldmanager_Select( array(
-				'label' => __( 'Default Domain', 'split-domain' ),
+				'label' => __( 'Default Domain', 'switchboard' ),
 				'datasource' => new \Fieldmanager_Datasource_Term( array(
 					'taxonomy' => Site::instance()->name,
 				) ),
