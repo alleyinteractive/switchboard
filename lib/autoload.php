@@ -2,10 +2,10 @@
 /**
  * This file sets up the custom autoloader.
  *
- * @package Split Domain
+ * @package Switchboard
  */
 
-namespace Split_Domain;
+namespace Switchboard;
 
 /**
  * Autoload classes.
@@ -14,14 +14,14 @@ namespace Split_Domain;
  */
 function autoload( $cls ) {
 	$cls = ltrim( $cls, '\\' );
-	if ( strpos( $cls, 'Split_Domain\\' ) !== 0 ) {
+	if ( strpos( $cls, 'Switchboard\\' ) !== 0 ) {
 		return;
 	}
 
-	$cls = strtolower( str_replace( [ 'Split_Domain\\', '_' ], [ '', '-' ], $cls ) );
+	$cls = strtolower( str_replace( [ 'Switchboard\\', '_' ], [ '', '-' ], $cls ) );
 	$dirs = explode( '\\', $cls );
 	$cls = array_pop( $dirs );
 
 	require_once( PATH . rtrim( '/lib/' . implode( '/', $dirs ), '/' ) . '/class-' . $cls . '.php' );
 }
-spl_autoload_register( '\Split_Domain\autoload' );
+spl_autoload_register( '\Switchboard\autoload' );

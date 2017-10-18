@@ -2,10 +2,10 @@
 /**
  * This file defines the `site` Taxonomy class.
  *
- * @package Split Domain
+ * @package Switchboard
  */
 
-namespace Split_Domain;
+namespace Switchboard;
 
 /**
  * Taxonomy for Sites.
@@ -31,7 +31,7 @@ class Site extends Taxonomy {
 	 * Setup the singleton.
 	 */
 	public function setup() {
-		$this->object_types = apply_filters( 'split_domain_post_types', [ 'post', 'page' ] );
+		$this->object_types = apply_filters( 'switchboard_post_types', [ 'post', 'page' ] );
 		add_action( 'fm_post', [ $this, 'site_dropdown' ] );
 		add_action( 'edited_site-domain', [ $this, 'update_cache' ] );
 		add_action( 'created_site-domain', [ $this, 'update_cache' ] );
@@ -54,8 +54,8 @@ class Site extends Taxonomy {
 	 * Modify the admin menu to make Domains top-level.
 	 */
 	public function admin_menu() {
-		add_menu_page( _x( 'Domains', 'split domain menu item', 'split-domain' ), _x( 'Domains', 'split domain menu item', 'split-domain' ), 'manage_options', 'split-domain', '__return_false', 'dashicons-networking', '4.01' );
-		add_submenu_page( 'split-domain', __( 'Edit Domains', 'split-domain' ), __( 'Edit Domains', 'split-domain' ), 'manage_options', 'edit-tags.php?taxonomy=' . $this->name );
+		add_menu_page( _x( 'Domains', 'switchboard menu item', 'switchboard' ), _x( 'Domains', 'switchboard menu item', 'switchboard' ), 'manage_options', 'switchboard', '__return_false', 'dashicons-networking', '4.01' );
+		add_submenu_page( 'switchboard', __( 'Edit Domains', 'switchboard' ), __( 'Edit Domains', 'switchboard' ), 'manage_options', 'edit-tags.php?taxonomy=' . $this->name );
 	}
 
 	/**
@@ -64,7 +64,7 @@ class Site extends Taxonomy {
 	 */
 	function admin_submenus() {
 		global $submenu;
-		$remove_top_levels = [ 'split-domain' ];
+		$remove_top_levels = [ 'switchboard' ];
 		foreach ( $remove_top_levels as $slug ) {
 			if ( isset( $submenu[ $slug ] ) ) {
 				array_shift( $submenu[ $slug ] );
@@ -79,7 +79,7 @@ class Site extends Taxonomy {
 		global $parent_file, $submenu_file, $taxonomy;
 		if ( $this->name === $taxonomy ) {
 			$submenu_file = 'edit-tags.php?taxonomy=' . $taxonomy; // WPCS: override ok.
-			$parent_file = 'split-domain'; // WPCS: override ok.
+			$parent_file = 'switchboard'; // WPCS: override ok.
 		}
 	}
 
@@ -89,21 +89,21 @@ class Site extends Taxonomy {
 	public function create_taxonomy() {
 		register_taxonomy( $this->name, $this->object_types, [
 			'labels' => [
-				'name'                  => __( 'Sites', 'split-domain' ),
-				'singular_name'         => __( 'Site', 'split-domain' ),
-				'search_items'          => __( 'Search Sites', 'split-domain' ),
-				'popular_items'         => __( 'Popular Sites', 'split-domain' ),
-				'all_items'             => __( 'All Sites', 'split-domain' ),
-				'parent_item'           => __( 'Parent Site', 'split-domain' ),
-				'parent_item_colon'     => __( 'Parent Site', 'split-domain' ),
-				'edit_item'             => __( 'Edit Site', 'split-domain' ),
-				'view_item'             => __( 'View Site', 'split-domain' ),
-				'update_item'           => __( 'Update Site', 'split-domain' ),
-				'add_new_item'          => __( 'Add New Site', 'split-domain' ),
-				'new_item_name'         => __( 'New Site Name', 'split-domain' ),
-				'add_or_remove_items'   => __( 'Add or remove Sites', 'split-domain' ),
-				'choose_from_most_used' => __( 'Choose from most used Sites', 'split-domain' ),
-				'menu_name'             => __( 'Sites', 'split-domain' ),
+				'name'                  => __( 'Sites', 'switchboard' ),
+				'singular_name'         => __( 'Site', 'switchboard' ),
+				'search_items'          => __( 'Search Sites', 'switchboard' ),
+				'popular_items'         => __( 'Popular Sites', 'switchboard' ),
+				'all_items'             => __( 'All Sites', 'switchboard' ),
+				'parent_item'           => __( 'Parent Site', 'switchboard' ),
+				'parent_item_colon'     => __( 'Parent Site', 'switchboard' ),
+				'edit_item'             => __( 'Edit Site', 'switchboard' ),
+				'view_item'             => __( 'View Site', 'switchboard' ),
+				'update_item'           => __( 'Update Site', 'switchboard' ),
+				'add_new_item'          => __( 'Add New Site', 'switchboard' ),
+				'new_item_name'         => __( 'New Site Name', 'switchboard' ),
+				'add_or_remove_items'   => __( 'Add or remove Sites', 'switchboard' ),
+				'choose_from_most_used' => __( 'Choose from most used Sites', 'switchboard' ),
+				'menu_name'             => __( 'Sites', 'switchboard' ),
 			],
 			'rewrite' => false,
 			'show_ui' => true,
@@ -130,7 +130,7 @@ class Site extends Taxonomy {
 			'name' => 'post_domains',
 			'children' => [
 				'allowed' => new \Fieldmanager_Checkboxes( [
-					'label' => __( 'Allow on these domains:', 'split-domain' ),
+					'label' => __( 'Allow on these domains:', 'switchboard' ),
 					'remove_default_meta_boxes' => true,
 					'datasource' => new \Fieldmanager_Datasource_Term( [
 						'taxonomy' => $this->name,
@@ -138,7 +138,7 @@ class Site extends Taxonomy {
 					] ),
 				] ),
 				'primary' => new \Fieldmanager_Select( [
-					'label' => __( 'Primary Domain:', 'split-domain' ),
+					'label' => __( 'Primary Domain:', 'switchboard' ),
 					'default_value' => Settings::instance()->get_setting( 'default' ),
 					'datasource' => new \Fieldmanager_Datasource_Term( [
 						'taxonomy' => $this->name,
@@ -146,7 +146,7 @@ class Site extends Taxonomy {
 				] ),
 			],
 		] );
-		$fm->add_meta_box( __( 'Site', 'split-domain' ), $this->object_types, 'side', 'high' );
+		$fm->add_meta_box( __( 'Site', 'switchboard' ), $this->object_types, 'side', 'high' );
 	}
 
 	/**
@@ -169,7 +169,7 @@ class Site extends Taxonomy {
 				'slug' => $term->slug,
 			];
 		}
-		update_option( 'split_domain_sites', $cache );
+		update_option( 'switchboard_sites', $cache );
 
 		// Unset the cached site term in the Core class.
 		Core::instance()->site_term = null;
@@ -184,11 +184,11 @@ class Site extends Taxonomy {
 			?>
 			<script type="text/javascript">
 			jQuery( function( $ ) {
-				$('.term-name-wrap label,.manage-column.column-name > a > span:first-child').text( <?php echo wp_json_encode( __( 'Domain', 'split-domain' ) ) ?> );
+				$('.term-name-wrap label,.manage-column.column-name > a > span:first-child').text( <?php echo wp_json_encode( __( 'Domain', 'switchboard' ) ); ?> );
 				$('#tag-name').attr( 'placeholder', 'domain.com' );
-				$('.term-name-wrap p').text( <?php echo wp_json_encode( __( 'The domain, without the protocol (http://) and without a slash at the end. Be sure to include the "www." if the domain will use that.', 'split-domain' ) ) ?> );
-				$('.term-slug-wrap p').text( <?php echo wp_json_encode( __( 'The slug is used for templating. It should be all lowercase and contain only letters, numbers, and hyphens.', 'split-domain' ) ) ?> );
-				$('.term-description-wrap p').text( <?php echo wp_json_encode( __( 'The description is used for internal notes.', 'split-domain' ) ) ?> );
+				$('.term-name-wrap p').text( <?php echo wp_json_encode( __( 'The domain, without the protocol (http://) and without a slash at the end. Be sure to include the "www." if the domain will use that.', 'switchboard' ) ); ?> );
+				$('.term-slug-wrap p').text( <?php echo wp_json_encode( __( 'The slug is used for templating. It should be all lowercase and contain only letters, numbers, and hyphens.', 'switchboard' ) ); ?> );
+				$('.term-description-wrap p').text( <?php echo wp_json_encode( __( 'The description is used for internal notes.', 'switchboard' ) ); ?> );
 			});
 			</script>
 			<?php
@@ -236,7 +236,7 @@ class Site extends Taxonomy {
 		if ( $this->name === $taxonomy ) {
 			$term = $this->validate_domain( $term );
 			if ( ! $term ) {
-				return new \WP_Error( 'invalid-domain', __( 'Invalid domain. The domain should be of the form "example.com" or "www.example.com"', 'split-domain' ) );
+				return new \WP_Error( 'invalid-domain', __( 'Invalid domain. The domain should be of the form "example.com" or "www.example.com"', 'switchboard' ) );
 			}
 		}
 
@@ -262,7 +262,7 @@ class Site extends Taxonomy {
 		) {
 			$term = $this->validate_domain( $data['name'] );
 			if ( ! $term ) {
-				wp_die( esc_html__( 'Invalid domain. The domain should be of the form "example.com" or "www.example.com". Please go back and enter a new domain.', 'split-domain' ) );
+				wp_die( esc_html__( 'Invalid domain. The domain should be of the form "example.com" or "www.example.com". Please go back and enter a new domain.', 'switchboard' ) );
 			}
 		}
 

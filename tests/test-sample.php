@@ -2,7 +2,7 @@
 /**
  * Class SampleTest
  *
- * @package Split Domain
+ * @package Switchboard
  */
 
 /**

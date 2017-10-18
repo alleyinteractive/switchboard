@@ -2,10 +2,10 @@
 /**
  * This file contains the Template class for modifying templates.
  *
- * @package Split Domain
+ * @package Switchboard
  */
 
-namespace Split_Domain;
+namespace Switchboard;
 
 /**
  * Handle all template modifications.
@@ -21,16 +21,16 @@ class Templates {
 
 		/**
 		 * You can prefix any string by calling
-		 * `apply_filters( 'split_domain_prefix', $thing )`. For example:
+		 * `apply_filters( 'switchboard_prefix', $thing )`. For example:
 		 *
 		 * ```php
-		 * get_header( apply_filters( 'split_domain_prefix', null ) );
+		 * get_header( apply_filters( 'switchboard_prefix', null ) );
 		 * ```
 		 *
 		 * This will load header-{domain slug}.php if it exists, and header.php
 		 * otherwise.
 		 */
-		add_filter( 'split_domain_prefix', [ $this, 'prefix' ] );
+		add_filter( 'switchboard_prefix', [ $this, 'prefix' ] );
 	}
 
 	/**
@@ -58,7 +58,7 @@ class Templates {
 		if (
 			false === strpos( $template, 'wp-content/themes/' )
 			|| false !== strpos( $template, 'themes/vip/plugins/' )
-			|| apply_filters( 'split_domain_disable_templates', false, $template )
+			|| apply_filters( 'switchboard_disable_templates', false, $template )
 		) {
 			return $template;
 		}
@@ -77,7 +77,7 @@ class Templates {
 		$base = substr( $file, 0, -4 );
 
 		// Maybe look in a subdirectory for the template.
-		$site_subdir = apply_filters( 'split_domain_template_subdirectory', false, Core::instance()->get_current_site_term(), $template );
+		$site_subdir = apply_filters( 'switchboard_template_subdirectory', false, Core::instance()->get_current_site_term(), $template );
 		if ( $site_subdir ) {
 			$templates[] = trailingslashit( $site_subdir ) . $base . '.php';
 		}
