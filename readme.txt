@@ -1,6 +1,6 @@
 === Switchboard ===
 Contributors: mboynes, alleyinteractive
-Tags: domains, multiple domains, multiple sites
+Tags: domains, multiple domains, multiple sites, syndication
 Requires at least: 4.6
 Tested up to: 4.8.2
 Stable tag: 0.1.0
