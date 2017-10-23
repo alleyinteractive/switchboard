@@ -50,8 +50,11 @@ class Core {
 	 */
 	public function get_current_site_term( $property = null ) {
 		if ( ! isset( $this->site_term ) ) {
-			if ( ! in_array( $property, [ 'slug', 'term_id', 'name' ] ) && ! did_action( 'init' ) ) {
-				_doing_it_wrong( __METHOD__, esc_html__( 'You cannot use this method that way before "init" because taxonomies have not been registered yet. You can only get the term_id, slug, or name of the term this early.', 'switchboard' ), '4.6.0' );
+			if (
+				! in_array( $property, [ 'slug', 'term_id', 'name' ] )
+				&& ! did_action( 'switchboard_taxonomy_registered' )
+			) {
+				_doing_it_wrong( __METHOD__, esc_html__( 'You cannot use this method that way before "init" because the taxonomy has not been registered yet. You can only get the term_id, slug, or name of the term this early.', 'switchboard' ), '4.6.0' );
 				return false;
 			}
 

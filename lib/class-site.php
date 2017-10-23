@@ -111,6 +111,8 @@ class Site extends Taxonomy {
 			'show_admin_column' => true,
 			'show_in_menu' => false,
 		] );
+
+		do_action( 'switchboard_taxonomy_registered', $this->name );
 	}
 
 	/**
