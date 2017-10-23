@@ -23,6 +23,9 @@ require_once( PATH . '/lib/autoload.php' );
 // Singleton trait.
 require_once( PATH . '/lib/trait-singleton.php' );
 
+// Helper functions for use in themes/plugins.
+require_once( PATH . '/lib/functions.php' );
+
 // Setup actions to autoload everything else.
 add_action( 'after_setup_theme', [ '\Switchboard\Core', 'instance' ] );
 add_action( 'after_setup_theme', [ '\Switchboard\Site', 'instance' ] );
