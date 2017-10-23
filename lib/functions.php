@@ -68,3 +68,13 @@ function get_default_site() {
 	return Core::get_default_site();
 }
 add_filter( 'switchboard:get_default_site', __NAMESPACE__ . '\get_default_site' );
+
+/**
+ * Get the raw "Default Domain" setting as a term id.
+ *
+ * @return int Domain term id.
+ */
+function get_default_site_id() {
+	return intval( Settings::instance()->get_setting( 'default' ) );
+}
+add_filter( 'switchboard:get_default_site_id', __NAMESPACE__ . '\get_default_site_id' );
