@@ -17,6 +17,7 @@ Switchboard lets your non-multisite WordPress site serve content across many dom
 
 * Requires PHP 5.4 or higher.
 * You must be able to make changes to your `wp-config.php` file.
+* [Fieldmanager](https://github.com/alleyinteractive/wordpress-fieldmanager/)
 
 == Installation ==
 
