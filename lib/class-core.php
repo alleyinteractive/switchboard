@@ -36,6 +36,9 @@ class Core {
 		// Filter admin urls.
 		add_filter( 'admin_url', [ $this, 'admin_url' ] );
 		add_action( 'admin_init', [ $this, 'admin_redirect' ] );
+
+		// Ensure that every domain can be a redirect destination.
+		add_filter( 'allowed_redirect_hosts', [ $this, 'allowed_redirect_hosts' ] );
 	}
 
 	/**
@@ -243,7 +246,7 @@ class Core {
 				return;
 			}
 
-			wp_redirect( str_replace( $current_site->name, $post_site->name, get_permalink() ), 301 );
+			wp_safe_redirect( str_replace( $current_site->name, $post_site->name, get_permalink() ), 301 );
 			exit;
 		}
 	}
@@ -322,8 +325,24 @@ class Core {
 
 		$site = $this->get_default_site();
 		if ( ! empty( $site->name ) && false === strpos( $_SERVER['HTTP_HOST'], $site->name ) ) { // WPCS: sanitization ok.
-			wp_redirect( esc_url_raw( 'http://' . $site->name . $_SERVER['REQUEST_URI'] ) ); // WPCS: sanitization ok.
+			wp_safe_redirect( esc_url_raw( 'http://' . $site->name . $_SERVER['REQUEST_URI'] ) ); // WPCS: sanitization ok.
 			exit();
 		}
+	}
+
+	/**
+	 * Filter the allowed redirect hosts used by wp_safe_redirect to add
+	 * Switchboard domains.
+	 *
+	 * @param  array $hosts Allowed hosts.
+	 * @return array
+	 */
+	public function allowed_redirect_hosts( $hosts ) {
+		$domains = get_option( 'switchboard_sites', [] );
+		if ( ! empty( $domains ) ) {
+			$domains = array_keys( $domains );
+			$hosts = array_merge( $hosts, $domains );
+		}
+		return $hosts;
 	}
 }
