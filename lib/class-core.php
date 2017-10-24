@@ -164,17 +164,31 @@ class Core {
 	 * @return bool True if yes, false if no.
 	 */
 	public static function is_post_allowed_on_current_site( $post = null ) {
+		return self::is_post_allowed_on_site(
+			$post,
+			intval( self::instance()->get_current_site_term( 'term_id' ) )
+		);
+	}
+
+	/**
+	 * Is the given post allowed on the given site?
+	 *
+	 * @param  int|\WP_Post  $post    Post ID or object.
+	 * @param  int           $site_id Site ID.
+	 * @return boolean true if yes, false if no.
+	 */
+	public static function is_post_allowed_on_site( $post, $site_id ) {
 		$sites = self::get_sites_for_post( $post );
+		$allowed = in_array( $site_id, $sites, true );
 
-		// First check if the current site is in the list and prefer that.
-		$current_site_id = intval( self::instance()->get_current_site_term( 'term_id' ) );
-		foreach ( $sites as $site ) {
-			if ( intval( $site->term_id ) === $current_site_id ) {
-				return true;
-			}
-		}
-
-		return false;
+		/**
+		 * Filter whether or not the given post is allowed on the given site.
+		 *
+		 * @param bool         $allowed Is the post allowed? True if yes, false if no.
+		 * @param int|\WP_Post $post    Post ID or object.
+		 * @param int          $site_id Site ID.
+		 */
+		return apply_filters( 'switchboard_post_allowed_on_site', $allowed, $post, $site_id );
 	}
 
 	/**
