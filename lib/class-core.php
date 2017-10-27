@@ -27,10 +27,10 @@ class Core {
 		add_action( 'template_redirect', [ $this, 'redirects' ] );
 
 		// Filter permalinks.
-		add_filter( 'post_link',         [ $this, 'post_link' ],     10, 2 );
-		add_filter( 'page_link',         [ $this, 'post_link' ],     10, 2 );
-		add_filter( 'attachment_link',   [ $this, 'post_link' ],     10, 2 );
-		add_filter( 'post_type_link',    [ $this, 'post_link' ],     10, 2 );
+		add_filter( 'post_link', [ $this, 'post_link' ],     10, 2 );
+		add_filter( 'page_link', [ $this, 'post_link' ],     10, 2 );
+		add_filter( 'attachment_link', [ $this, 'post_link' ],     10, 2 );
+		add_filter( 'post_type_link', [ $this, 'post_link' ],     10, 2 );
 		add_filter( 'get_canonical_url', [ $this, 'canonical_url' ], 10, 2 );
 
 		// Filter admin urls.
@@ -178,15 +178,21 @@ class Core {
 	 * @return boolean true if yes, false if no.
 	 */
 	public static function is_post_allowed_on_site( $post, $site_id ) {
-		$sites = self::get_sites_for_post( $post );
-		$allowed = in_array( $site_id, $sites, true );
+		$post = get_post( $post );
+		if ( is_object_in_taxonomy( $post->post_type, Site::instance()->name ) ) {
+			$sites = self::get_sites_for_post( $post );
+			$allowed = in_array( $site_id, $sites, true );
+		} else {
+			// If the object isn't in the taxonomy, it's always allowed.
+			$allowed = true;
+		}
 
 		/**
 		 * Filter whether or not the given post is allowed on the given site.
 		 *
-		 * @param bool         $allowed Is the post allowed? True if yes, false if no.
-		 * @param int|\WP_Post $post    Post ID or object.
-		 * @param int          $site_id Site ID.
+		 * @param bool     $allowed Is the post allowed? True if yes, false if no.
+		 * @param \WP_Post $post    Post object.
+		 * @param int      $site_id Site ID.
 		 */
 		return apply_filters( 'switchboard_post_allowed_on_site', $allowed, $post, $site_id );
 	}
