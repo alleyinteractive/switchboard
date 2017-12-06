@@ -25,6 +25,7 @@ class Core {
 	 */
 	public function setup() {
 		add_action( 'template_redirect', [ $this, 'redirects' ] );
+		add_action( 'after_setup_theme', [ $this, 'alias_redirects' ] );
 
 		// Filter permalinks.
 		add_filter( 'post_link', [ $this, 'post_link' ],     10, 2 );
@@ -275,6 +276,23 @@ class Core {
 	}
 
 	/**
+	 * Handle alias redirects.
+	 *
+	 * If the current domain is an alias for another domain, this method will
+	 * redirect the current request to the aliased domain.
+	 */
+	public static function alias_redirects() {
+		$aliases = self::get_domain_aliases();
+		$current_host = parse_url( home_url(), PHP_URL_HOST );
+
+		if ( ! empty( $aliases[ $current_host ] ) ) {
+			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
+			wp_safe_redirect( sprintf( 'http%s://%s%s', is_ssl() ? 's' : '', $aliases[ $current_host ], $request_uri ), 301 );
+			exit;
+		}
+	}
+
+	/**
 	 * Set the correct domain in permalinks. This is a hook for all filters
 	 * stemming from `get_permalink()`.
 	 *
@@ -348,7 +366,7 @@ class Core {
 
 		$site = $this->get_default_site();
 		if ( ! empty( $site->name ) && false === strpos( $_SERVER['HTTP_HOST'], $site->name ) ) { // WPCS: sanitization ok.
-			wp_safe_redirect( esc_url_raw( 'http://' . $site->name . $_SERVER['REQUEST_URI'] ) ); // WPCS: sanitization ok.
+			wp_safe_redirect( esc_url_raw( sprintf( 'http%s://%s%s', is_ssl() ? 's' : '', $site->name, $_SERVER['REQUEST_URI'] ) ) ); // WPCS: sanitization ok.
 			exit();
 		}
 	}
@@ -367,5 +385,34 @@ class Core {
 			$hosts = array_merge( $hosts, $domains );
 		}
 		return $hosts;
+	}
+
+	/**
+	 * Get domain aliases as an array of alias => domain.
+	 *
+	 * @return array Keys are aliases, values are the aliased domains. For
+	 *               example, [ 'alias.domain.com' => 'domain.com' ].
+	 */
+	public static function get_domain_aliases() {
+		$cache_key = 'switchboard-domain-aliases';
+		$aliases = get_transient( $cache_key );
+		if ( false === $aliases ) {
+			$aliases = [];
+			$domains = get_option( 'switchboard_sites', [] );
+			foreach ( $domains as $domain => $domain_props ) {
+				$domain_aliases = get_term_meta( $domain_props['term_id'], 'alias' );
+				$aliases = array_merge( $aliases, array_fill_keys( $domain_aliases, $domain ) );
+			}
+			set_transient( $cache_key, $aliases );
+		}
+		return $aliases;
+	}
+
+	/**
+	 * Flush and repopulate the domain alias cache.
+	 */
+	public static function update_domain_aliases_cache() {
+		delete_transient( 'switchboard-domain-aliases' );
+		self::get_domain_aliases();
 	}
 }

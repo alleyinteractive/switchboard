@@ -33,9 +33,10 @@ class Site extends Taxonomy {
 	public function setup() {
 		$this->object_types = apply_filters( 'switchboard_post_types', [ 'post', 'page' ] );
 		add_action( 'fm_post', [ $this, 'site_dropdown' ] );
-		add_action( 'edited_site-domain', [ $this, 'update_cache' ] );
-		add_action( 'created_site-domain', [ $this, 'update_cache' ] );
-		add_action( 'delete_site-domain', [ $this, 'update_cache' ] );
+		add_action( 'fm_term_' . $this->name, [ $this, 'aliases_fields' ], 7 );
+		add_action( 'edited_' . $this->name, [ $this, 'update_cache' ] );
+		add_action( 'created_' . $this->name, [ $this, 'update_cache' ] );
+		add_action( 'delete_' . $this->name, [ $this, 'update_cache' ] );
 
 		add_action( 'admin_menu', [ $this, 'admin_menu' ] );
 		add_action( 'admin_menu', [ $this, 'admin_submenus' ], 20 );
@@ -152,6 +153,34 @@ class Site extends Taxonomy {
 	}
 
 	/**
+	 * Create the UI for domain aliases.
+	 */
+	public function aliases_fields() {
+		$fm = new \Fieldmanager_Group( array(
+			'name' => 'aliases_wrapper',
+			'label' => __( 'Domain Aliases', 'switchboard' ),
+			'description' => __( 'Domain aliases will automatically get redirected to the domain. For example, you could add an alias "www.domain.com" for the domain "domain.com" to redirect all pages on www.domain.com to domain.com.', 'switchboard' ),
+			'serialize_data' => false,
+			'add_to_prefix' => false,
+			'children' => [
+				'alias' => new \Fieldmanager_TextField( [
+					'serialize_data' => false,
+					'one_label_per_item' => false,
+					'limit' => 0,
+					'extra_elements' => 0,
+					'add_more_label' => __( 'Add a domain alias', 'switchboard' ),
+					'sanitize' => [ $this, 'validate_domain' ],
+					'attributes' => [
+						'placeholder' => 'www.domain.com',
+						'size' => 50,
+					],
+				] ),
+			],
+		) );
+		$fm->add_term_meta_box( '', array( 'site-domain' ) );
+	}
+
+	/**
 	 * Update the site cache when terms are modified.
 	 */
 	public function update_cache() {
@@ -175,6 +204,9 @@ class Site extends Taxonomy {
 
 		// Unset the cached site term in the Core class.
 		Core::instance()->site_term = null;
+
+		// Update the domain aliases cache.
+		Core::update_domain_aliases_cache();
 	}
 
 	/**
@@ -203,7 +235,7 @@ class Site extends Taxonomy {
 	 * @param  string $domain Domain.
 	 * @return string|false   Domain, normalized, if valid; false if invalid.
 	 */
-	protected function validate_domain( $domain ) {
+	public function validate_domain( $domain ) {
 		$domain = strtolower( $domain );
 		$domain_full = $domain;
 
