@@ -181,8 +181,8 @@ class Core {
 	/**
 	 * Is the given post allowed on the given site?
 	 *
-	 * @param  int|\WP_Post  $post    Post ID or object.
-	 * @param  int           $site_id Site ID.
+	 * @param  int|\WP_Post $post    Post ID or object.
+	 * @param  int          $site_id Site ID.
 	 * @return boolean True if yes, false if no.
 	 */
 	public static function is_post_allowed_on_site( $post, $site_id ) {
@@ -436,12 +436,12 @@ class Core {
 		// Ensure that we never redirect to the same domain.
 		if (
 			empty( $_SERVER['HTTP_HOST'] )
-			|| strtolower( $domain ) === strtolower( $_SERVER['HTTP_HOST'] )
+			|| strtolower( $domain ) === strtolower( $_SERVER['HTTP_HOST'] ) // WPCS: sanitization ok.
 		) {
 			return false;
 		}
 
-		$request_uri = ! empty( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
+		$request_uri = ! empty( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/'; // WPCS: sanitization ok.
 		wp_safe_redirect( sprintf( 'http%s://%s%s', is_ssl() ? 's' : '', $domain, $request_uri ), 301 );
 		exit;
 	}

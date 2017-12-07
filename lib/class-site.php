@@ -65,7 +65,7 @@ class Site extends Taxonomy {
 	 * Our top-level menu items are by themselves useless, so we have to remove the
 	 * blank links.
 	 */
-	function admin_submenus() {
+	public function admin_submenus() {
 		global $submenu;
 		$remove_top_levels = [ 'switchboard' ];
 		foreach ( $remove_top_levels as $slug ) {

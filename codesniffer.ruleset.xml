@@ -7,5 +7,14 @@
 	<exclude-pattern>node_modules/*</exclude-pattern>
 
 	<rule ref="WordPress">
+		<exclude name="WordPress.VIP.ValidatedSanitizedInput.MissingUnslash" />
+	</rule>
+
+	<rule ref="Generic.Commenting.DocComment.MissingShort">
+		<exclude-pattern>lib/functions.php</exclude-pattern>
+	</rule>
+
+	<rule ref="Squiz.Commenting.FunctionComment.MissingParamTag">
+		<exclude-pattern>lib/functions.php</exclude-pattern>
 	</rule>
 </ruleset>
