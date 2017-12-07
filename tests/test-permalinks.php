@@ -17,22 +17,25 @@ class PermalinksTest extends \WP_UnitTestCase {
 
 		$this->taxonomy = Site::instance()->name;
 
-		// Create default objects.
+		// The "default site" is the default domain as configured in settings.
 		$this->default_site_id = $this->factory->term->create( [
 			'name' => 'default-site.com',
 			'slug' => 'default-site',
 			'taxonomy' => $this->taxonomy,
 		] );
+		// The "primary site" is the domain we'll set to be the post's domain.
 		$this->primary_site_id = $this->factory->term->create( [
 			'name' => 'primary-site.com',
 			'slug' => 'primary-site',
 			'taxonomy' => $this->taxonomy,
 		] );
+		// The "current site" is the domain we're currently using.
 		$this->current_site_id = $this->factory->term->create( [
 			'name' => WP_TESTS_DOMAIN,
 			'slug' => 'current',
 			'taxonomy' => $this->taxonomy,
 		] );
+
 		$this->post_id = $this->factory->post->create( [
 			'post_name' => 'alpha',
 			'post_status' => 'publish',

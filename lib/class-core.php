@@ -290,16 +290,19 @@ class Core {
 	 *
 	 * If the current domain is an alias for another domain, this method will
 	 * redirect the current request to the aliased domain.
+	 *
+	 * @return bool False if a redirect was attempted but failed, true if no
+	 *              redirect was attempted.
 	 */
 	public static function alias_redirects() {
 		$aliases = self::get_domain_aliases();
 		$current_host = parse_url( home_url(), PHP_URL_HOST );
 
 		if ( ! empty( $aliases[ $current_host ] ) ) {
-			$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
-			wp_safe_redirect( sprintf( 'http%s://%s%s', is_ssl() ? 's' : '', $aliases[ $current_host ], $request_uri ), 301 );
-			exit;
+			return self::redirect_to_domain( $aliases[ $current_host ] );
 		}
+
+		return true;
 	}
 
 	/**
@@ -366,18 +369,15 @@ class Core {
 	 */
 	public function admin_redirect() {
 		if (
-			! isset( $_SERVER['HTTP_HOST'] )
-			|| ! isset( $_SERVER['REQUEST_URI'] )
-			|| defined( 'DOING_AJAX' ) && DOING_AJAX
+			defined( 'DOING_AJAX' ) && DOING_AJAX
 			|| ! apply_filters( 'switchboard_redirect_admin_domain', true )
 		) {
 			return;
 		}
 
 		$site = $this->get_default_site();
-		if ( ! empty( $site->name ) && false === strpos( $_SERVER['HTTP_HOST'], $site->name ) ) { // WPCS: sanitization ok.
-			wp_safe_redirect( esc_url_raw( sprintf( 'http%s://%s%s', is_ssl() ? 's' : '', $site->name, $_SERVER['REQUEST_URI'] ) ) ); // WPCS: sanitization ok.
-			exit();
+		if ( ! empty( $site->name ) ) { // WPCS: sanitization ok.
+			self::redirect_to_domain( $site->name );
 		}
 	}
 
@@ -424,5 +424,25 @@ class Core {
 	public static function update_domain_aliases_cache() {
 		delete_transient( self::$aliases_transient_key );
 		self::get_domain_aliases();
+	}
+
+	/**
+	 * Redirect the current request to a different domain.
+	 *
+	 * @param  string $domain Domain to which to redirect.
+	 * @return False on Failure.
+	 */
+	public static function redirect_to_domain( $domain ) {
+		// Ensure that we never redirect to the same domain.
+		if (
+			empty( $_SERVER['HTTP_HOST'] )
+			|| strtolower( $domain ) === strtolower( $_SERVER['HTTP_HOST'] )
+		) {
+			return false;
+		}
+
+		$request_uri = ! empty( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/';
+		wp_safe_redirect( sprintf( 'http%s://%s%s', is_ssl() ? 's' : '', $domain, $request_uri ), 301 );
+		exit;
 	}
 }
