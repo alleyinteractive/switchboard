@@ -48,6 +48,8 @@ class Site extends Taxonomy {
 		add_filter( 'pre_insert_term', [ $this, 'santize_term_data' ], 10, 2 );
 		add_filter( 'wp_update_term_data', [ $this, 'prevent_invalid_domains_on_edit' ], 10, 3 );
 
+		add_filter( 'term_link', [ $this, 'term_link' ], 10, 3 );
+
 		parent::setup();
 	}
 
@@ -301,5 +303,21 @@ class Site extends Taxonomy {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Filter term links to link to domains.
+	 *
+	 * @param  string   $termlink Term link.
+	 * @param  \WP_Term $term     Term object.
+	 * @param  string   $taxonomy Taxonomy slug.
+	 * @return string
+	 */
+	public function term_link( $termlink, $term, $taxonomy ) {
+		if ( $taxonomy === $this->name ) {
+			return sprintf( 'http%s://%s/', is_ssl() ? 's' : '', $term->name );
+		}
+
+		return $termlink;
 	}
 }

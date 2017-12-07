@@ -133,4 +133,8 @@ class PermalinksTest extends \WP_UnitTestCase {
 		wp_set_object_terms( $this->post_id, [ $this->default_site_id, $this->primary_site_id, $this->current_site_id ], $this->taxonomy );
 		$this->assertContains( 'primary-site.com', wp_get_canonical_url( $this->post_id ) );
 	}
+
+	public function test_site_term_links() {
+		$this->assertSame( 'http://primary-site.com/', get_term_link( $this->primary_site_id ) );
+	}
 }
