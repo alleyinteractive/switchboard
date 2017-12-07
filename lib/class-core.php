@@ -21,6 +21,13 @@ class Core {
 	public $site_term;
 
 	/**
+	 * Domain aliases transient key.
+	 *
+	 * @var string
+	 */
+	public static $aliases_transient_key = 'switchboard-domain-aliases';
+
+	/**
 	 * Setup the singleton.
 	 */
 	public function setup() {
@@ -28,10 +35,10 @@ class Core {
 		add_action( 'after_setup_theme', [ $this, 'alias_redirects' ] );
 
 		// Filter permalinks.
-		add_filter( 'post_link', [ $this, 'post_link' ],     10, 2 );
-		add_filter( 'page_link', [ $this, 'post_link' ],     10, 2 );
-		add_filter( 'attachment_link', [ $this, 'post_link' ],     10, 2 );
-		add_filter( 'post_type_link', [ $this, 'post_link' ],     10, 2 );
+		add_filter( 'post_link', [ $this, 'post_link' ], 10, 2 );
+		add_filter( 'page_link', [ $this, 'post_link' ], 10, 2 );
+		add_filter( 'attachment_link', [ $this, 'post_link' ], 10, 2 );
+		add_filter( 'post_type_link', [ $this, 'post_link' ], 10, 2 );
 		add_filter( 'get_canonical_url', [ $this, 'canonical_url' ], 10, 2 );
 
 		// Filter admin urls.
@@ -55,7 +62,7 @@ class Core {
 				! in_array( $property, [ 'slug', 'term_id', 'name' ] )
 				&& ! did_action( 'switchboard_taxonomy_registered' )
 			) {
-				_doing_it_wrong( __METHOD__, esc_html__( 'You cannot use this method that way before "init" because the taxonomy has not been registered yet. You can only get the term_id, slug, or name of the term this early.', 'switchboard' ), '4.6.0' );
+				_doing_it_wrong( __METHOD__, esc_html__( 'You cannot use this method that way before the action "switchboard_taxonomy_registered" fires, because the taxonomy has not been registered yet. You can only get the term_id, slug, or name of the term this early.', 'switchboard' ), '4.6.0' );
 				return false;
 			}
 
@@ -176,11 +183,14 @@ class Core {
 	 *
 	 * @param  int|\WP_Post  $post    Post ID or object.
 	 * @param  int           $site_id Site ID.
-	 * @return boolean true if yes, false if no.
+	 * @return boolean True if yes, false if no.
 	 */
 	public static function is_post_allowed_on_site( $post, $site_id ) {
 		$post = get_post( $post );
-		if ( is_object_in_taxonomy( $post->post_type, Site::instance()->name ) ) {
+		if (
+			$post instanceof \WP_Post
+			&& is_object_in_taxonomy( $post->post_type, Site::instance()->name )
+		) {
 			$sites = self::get_sites_for_post( $post );
 			$allowed = in_array( $site_id, $sites, true );
 		} else {
@@ -394,7 +404,7 @@ class Core {
 	 *               example, [ 'alias.domain.com' => 'domain.com' ].
 	 */
 	public static function get_domain_aliases() {
-		$cache_key = 'switchboard-domain-aliases';
+		$cache_key = self::$aliases_transient_key;
 		$aliases = get_transient( $cache_key );
 		if ( false === $aliases ) {
 			$aliases = [];
@@ -412,7 +422,7 @@ class Core {
 	 * Flush and repopulate the domain alias cache.
 	 */
 	public static function update_domain_aliases_cache() {
-		delete_transient( 'switchboard-domain-aliases' );
+		delete_transient( self::$aliases_transient_key );
 		self::get_domain_aliases();
 	}
 }
