@@ -74,12 +74,23 @@ class Templates {
 
 		// Get the basename of the template.
 		$file = str_replace( [ STYLESHEETPATH . '/', TEMPLATEPATH . '/' ], '', $template );
-		$base = substr( $file, 0, -4 );
+		$base = basename( $file, '.php' );
 
 		// Maybe look in a subdirectory for the template.
-		$site_subdir = apply_filters( 'switchboard_template_subdirectory', false, Core::instance()->get_current_site_term(), $template );
-		if ( $site_subdir ) {
-			$templates[] = trailingslashit( $site_subdir ) . $base . '.php';
+		/**
+		 * Filter the subdirectories in which to look for templates, in order.
+		 *
+		 * @param array    $subdirectories Subdirectory hierarchy in which to look
+		 *                                 for the template.
+		 * @param \WP_Term $current_domain Current/active domain.
+		 * @param string   $template       Current template file being loaded.
+		 * @param string   $base           Template basename.
+		 */
+		$site_subdirs = apply_filters( 'switchboard_template_subdirectory', [], Core::instance()->get_current_site_term(), $template, $base );
+		if ( ! empty( $site_subdirs ) ) {
+			foreach ( (array) $site_subdirs as $subdir ) {
+				$templates[] = trailingslashit( $subdir ) . $base . '.php';
+			}
 		}
 
 		// Look for {slug}-{basename}.php, e.g. domain-single.php.

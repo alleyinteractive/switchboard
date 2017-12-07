@@ -21,21 +21,32 @@ class Core {
 	public $site_term;
 
 	/**
+	 * Domain aliases transient key.
+	 *
+	 * @var string
+	 */
+	public static $aliases_transient_key = 'switchboard-domain-aliases';
+
+	/**
 	 * Setup the singleton.
 	 */
 	public function setup() {
 		add_action( 'template_redirect', [ $this, 'redirects' ] );
+		add_action( 'after_setup_theme', [ $this, 'alias_redirects' ] );
 
 		// Filter permalinks.
-		add_filter( 'post_link',         [ $this, 'post_link' ],     10, 2 );
-		add_filter( 'page_link',         [ $this, 'post_link' ],     10, 2 );
-		add_filter( 'attachment_link',   [ $this, 'post_link' ],     10, 2 );
-		add_filter( 'post_type_link',    [ $this, 'post_link' ],     10, 2 );
+		add_filter( 'post_link', [ $this, 'post_link' ], 10, 2 );
+		add_filter( 'page_link', [ $this, 'post_link' ], 10, 2 );
+		add_filter( 'attachment_link', [ $this, 'post_link' ], 10, 2 );
+		add_filter( 'post_type_link', [ $this, 'post_link' ], 10, 2 );
 		add_filter( 'get_canonical_url', [ $this, 'canonical_url' ], 10, 2 );
 
 		// Filter admin urls.
 		add_filter( 'admin_url', [ $this, 'admin_url' ] );
 		add_action( 'admin_init', [ $this, 'admin_redirect' ] );
+
+		// Ensure that every domain can be a redirect destination.
+		add_filter( 'allowed_redirect_hosts', [ $this, 'allowed_redirect_hosts' ] );
 	}
 
 	/**
@@ -47,8 +58,11 @@ class Core {
 	 */
 	public function get_current_site_term( $property = null ) {
 		if ( ! isset( $this->site_term ) ) {
-			if ( ! in_array( $property, [ 'slug', 'term_id', 'name' ] ) && ! did_action( 'init' ) ) {
-				_doing_it_wrong( __METHOD__, esc_html__( 'You cannot use this method that way before "init" because taxonomies have not been registered yet. You can only get the term_id, slug, or name of the term this early.', 'switchboard' ), '4.6.0' );
+			if (
+				! in_array( $property, [ 'slug', 'term_id', 'name' ] )
+				&& ! did_action( 'switchboard_taxonomy_registered' )
+			) {
+				_doing_it_wrong( __METHOD__, esc_html__( 'You cannot use this method that way before the action "switchboard_taxonomy_registered" fires, because the taxonomy has not been registered yet. You can only get the term_id, slug, or name of the term this early.', 'switchboard' ), '4.6.0' );
 				return false;
 			}
 
@@ -158,17 +172,40 @@ class Core {
 	 * @return bool True if yes, false if no.
 	 */
 	public static function is_post_allowed_on_current_site( $post = null ) {
-		$sites = self::get_sites_for_post( $post );
+		return self::is_post_allowed_on_site(
+			$post,
+			intval( self::instance()->get_current_site_term( 'term_id' ) )
+		);
+	}
 
-		// First check if the current site is in the list and prefer that.
-		$current_site_id = intval( self::instance()->get_current_site_term( 'term_id' ) );
-		foreach ( $sites as $site ) {
-			if ( intval( $site->term_id ) === $current_site_id ) {
-				return true;
-			}
+	/**
+	 * Is the given post allowed on the given site?
+	 *
+	 * @param  int|\WP_Post $post    Post ID or object.
+	 * @param  int          $site_id Site ID.
+	 * @return boolean True if yes, false if no.
+	 */
+	public static function is_post_allowed_on_site( $post, $site_id ) {
+		$post = get_post( $post );
+		if (
+			$post instanceof \WP_Post
+			&& is_object_in_taxonomy( $post->post_type, Site::instance()->name )
+		) {
+			$sites = self::get_sites_for_post( $post );
+			$allowed = in_array( $site_id, wp_list_pluck( $sites, 'term_id' ), true );
+		} else {
+			// If the object isn't in the taxonomy, it's always allowed.
+			$allowed = true;
 		}
 
-		return false;
+		/**
+		 * Filter whether or not the given post is allowed on the given site.
+		 *
+		 * @param bool     $allowed Is the post allowed? True if yes, false if no.
+		 * @param \WP_Post $post    Post object.
+		 * @param int      $site_id Site ID.
+		 */
+		return apply_filters( 'switchboard_post_allowed_on_site', $allowed, $post, $site_id );
 	}
 
 	/**
@@ -243,9 +280,29 @@ class Core {
 				return;
 			}
 
-			wp_redirect( str_replace( $current_site->name, $post_site->name, get_permalink() ), 301 );
+			wp_safe_redirect( str_replace( $current_site->name, $post_site->name, get_permalink() ), 301 );
 			exit;
 		}
+	}
+
+	/**
+	 * Handle alias redirects.
+	 *
+	 * If the current domain is an alias for another domain, this method will
+	 * redirect the current request to the aliased domain.
+	 *
+	 * @return bool False if a redirect was attempted but failed, true if no
+	 *              redirect was attempted.
+	 */
+	public static function alias_redirects() {
+		$aliases = self::get_domain_aliases();
+		$current_host = parse_url( home_url(), PHP_URL_HOST );
+
+		if ( ! empty( $aliases[ $current_host ] ) ) {
+			return self::redirect_to_domain( $aliases[ $current_host ] );
+		}
+
+		return true;
 	}
 
 	/**
@@ -312,18 +369,80 @@ class Core {
 	 */
 	public function admin_redirect() {
 		if (
-			! isset( $_SERVER['HTTP_HOST'] )
-			|| ! isset( $_SERVER['REQUEST_URI'] )
-			|| defined( 'DOING_AJAX' ) && DOING_AJAX
+			defined( 'DOING_AJAX' ) && DOING_AJAX
 			|| ! apply_filters( 'switchboard_redirect_admin_domain', true )
 		) {
 			return;
 		}
 
 		$site = $this->get_default_site();
-		if ( ! empty( $site->name ) && false === strpos( $_SERVER['HTTP_HOST'], $site->name ) ) { // WPCS: sanitization ok.
-			wp_redirect( esc_url_raw( 'http://' . $site->name . $_SERVER['REQUEST_URI'] ) ); // WPCS: sanitization ok.
-			exit();
+		if ( ! empty( $site->name ) ) { // WPCS: sanitization ok.
+			self::redirect_to_domain( $site->name );
 		}
+	}
+
+	/**
+	 * Filter the allowed redirect hosts used by wp_safe_redirect to add
+	 * Switchboard domains.
+	 *
+	 * @param  array $hosts Allowed hosts.
+	 * @return array
+	 */
+	public function allowed_redirect_hosts( $hosts ) {
+		$domains = get_option( 'switchboard_sites', [] );
+		if ( ! empty( $domains ) ) {
+			$domains = array_keys( $domains );
+			$hosts = array_merge( $hosts, $domains );
+		}
+		return $hosts;
+	}
+
+	/**
+	 * Get domain aliases as an array of alias => domain.
+	 *
+	 * @return array Keys are aliases, values are the aliased domains. For
+	 *               example, [ 'alias.domain.com' => 'domain.com' ].
+	 */
+	public static function get_domain_aliases() {
+		$cache_key = self::$aliases_transient_key;
+		$aliases = get_transient( $cache_key );
+		if ( false === $aliases ) {
+			$aliases = [];
+			$domains = get_option( 'switchboard_sites', [] );
+			foreach ( $domains as $domain => $domain_props ) {
+				$domain_aliases = get_term_meta( $domain_props['term_id'], 'alias' );
+				$aliases = array_merge( $aliases, array_fill_keys( $domain_aliases, $domain ) );
+			}
+			set_transient( $cache_key, $aliases );
+		}
+		return $aliases;
+	}
+
+	/**
+	 * Flush and repopulate the domain alias cache.
+	 */
+	public static function update_domain_aliases_cache() {
+		delete_transient( self::$aliases_transient_key );
+		self::get_domain_aliases();
+	}
+
+	/**
+	 * Redirect the current request to a different domain.
+	 *
+	 * @param  string $domain Domain to which to redirect.
+	 * @return False on Failure.
+	 */
+	public static function redirect_to_domain( $domain ) {
+		// Ensure that we never redirect to the same domain.
+		if (
+			empty( $_SERVER['HTTP_HOST'] )
+			|| strtolower( $domain ) === strtolower( $_SERVER['HTTP_HOST'] ) // WPCS: sanitization ok.
+		) {
+			return false;
+		}
+
+		$request_uri = ! empty( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : '/'; // WPCS: sanitization ok.
+		wp_safe_redirect( sprintf( 'http%s://%s%s', is_ssl() ? 's' : '', $domain, $request_uri ), 301 );
+		exit;
 	}
 }

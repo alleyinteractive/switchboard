@@ -33,9 +33,10 @@ class Site extends Taxonomy {
 	public function setup() {
 		$this->object_types = apply_filters( 'switchboard_post_types', [ 'post', 'page' ] );
 		add_action( 'fm_post', [ $this, 'site_dropdown' ] );
-		add_action( 'edited_site-domain', [ $this, 'update_cache' ] );
-		add_action( 'created_site-domain', [ $this, 'update_cache' ] );
-		add_action( 'delete_site-domain', [ $this, 'update_cache' ] );
+		add_action( 'fm_term_' . $this->name, [ $this, 'aliases_fields' ], 7 );
+		add_action( 'edited_' . $this->name, [ $this, 'update_cache' ] );
+		add_action( 'created_' . $this->name, [ $this, 'update_cache' ] );
+		add_action( 'delete_' . $this->name, [ $this, 'update_cache' ] );
 
 		add_action( 'admin_menu', [ $this, 'admin_menu' ] );
 		add_action( 'admin_menu', [ $this, 'admin_submenus' ], 20 );
@@ -46,6 +47,8 @@ class Site extends Taxonomy {
 
 		add_filter( 'pre_insert_term', [ $this, 'santize_term_data' ], 10, 2 );
 		add_filter( 'wp_update_term_data', [ $this, 'prevent_invalid_domains_on_edit' ], 10, 3 );
+
+		add_filter( 'term_link', [ $this, 'term_link' ], 10, 3 );
 
 		parent::setup();
 	}
@@ -62,7 +65,7 @@ class Site extends Taxonomy {
 	 * Our top-level menu items are by themselves useless, so we have to remove the
 	 * blank links.
 	 */
-	function admin_submenus() {
+	public function admin_submenus() {
 		global $submenu;
 		$remove_top_levels = [ 'switchboard' ];
 		foreach ( $remove_top_levels as $slug ) {
@@ -111,6 +114,8 @@ class Site extends Taxonomy {
 			'show_admin_column' => true,
 			'show_in_menu' => false,
 		] );
+
+		do_action( 'switchboard_taxonomy_registered', $this->name );
 	}
 
 	/**
@@ -150,6 +155,34 @@ class Site extends Taxonomy {
 	}
 
 	/**
+	 * Create the UI for domain aliases.
+	 */
+	public function aliases_fields() {
+		$fm = new \Fieldmanager_Group( array(
+			'name' => 'aliases_wrapper',
+			'label' => __( 'Domain Aliases', 'switchboard' ),
+			'description' => __( 'Domain aliases will automatically get redirected to the domain. For example, you could add an alias "www.domain.com" for the domain "domain.com" to redirect all pages on www.domain.com to domain.com.', 'switchboard' ),
+			'serialize_data' => false,
+			'add_to_prefix' => false,
+			'children' => [
+				'alias' => new \Fieldmanager_TextField( [
+					'serialize_data' => false,
+					'one_label_per_item' => false,
+					'limit' => 0,
+					'extra_elements' => 0,
+					'add_more_label' => __( 'Add a domain alias', 'switchboard' ),
+					'sanitize' => [ $this, 'validate_domain' ],
+					'attributes' => [
+						'placeholder' => 'www.domain.com',
+						'size' => 50,
+					],
+				] ),
+			],
+		) );
+		$fm->add_term_meta_box( '', array( 'site-domain' ) );
+	}
+
+	/**
 	 * Update the site cache when terms are modified.
 	 */
 	public function update_cache() {
@@ -173,6 +206,9 @@ class Site extends Taxonomy {
 
 		// Unset the cached site term in the Core class.
 		Core::instance()->site_term = null;
+
+		// Update the domain aliases cache.
+		Core::update_domain_aliases_cache();
 	}
 
 	/**
@@ -201,7 +237,7 @@ class Site extends Taxonomy {
 	 * @param  string $domain Domain.
 	 * @return string|false   Domain, normalized, if valid; false if invalid.
 	 */
-	protected function validate_domain( $domain ) {
+	public function validate_domain( $domain ) {
 		$domain = strtolower( $domain );
 		$domain_full = $domain;
 
@@ -267,5 +303,21 @@ class Site extends Taxonomy {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Filter term links to link to domains.
+	 *
+	 * @param  string   $termlink Term link.
+	 * @param  \WP_Term $term     Term object.
+	 * @param  string   $taxonomy Taxonomy slug.
+	 * @return string
+	 */
+	public function term_link( $termlink, $term, $taxonomy ) {
+		if ( $taxonomy === $this->name ) {
+			return sprintf( 'http%s://%s/', is_ssl() ? 's' : '', $term->name );
+		}
+
+		return $termlink;
 	}
 }

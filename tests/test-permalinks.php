@@ -17,22 +17,25 @@ class PermalinksTest extends \WP_UnitTestCase {
 
 		$this->taxonomy = Site::instance()->name;
 
-		// Create default objects.
+		// The "default site" is the default domain as configured in settings.
 		$this->default_site_id = $this->factory->term->create( [
 			'name' => 'default-site.com',
 			'slug' => 'default-site',
 			'taxonomy' => $this->taxonomy,
 		] );
+		// The "primary site" is the domain we'll set to be the post's domain.
 		$this->primary_site_id = $this->factory->term->create( [
 			'name' => 'primary-site.com',
 			'slug' => 'primary-site',
 			'taxonomy' => $this->taxonomy,
 		] );
+		// The "current site" is the domain we're currently using.
 		$this->current_site_id = $this->factory->term->create( [
 			'name' => WP_TESTS_DOMAIN,
 			'slug' => 'current',
 			'taxonomy' => $this->taxonomy,
 		] );
+
 		$this->post_id = $this->factory->post->create( [
 			'post_name' => 'alpha',
 			'post_status' => 'publish',
@@ -129,5 +132,9 @@ class PermalinksTest extends \WP_UnitTestCase {
 		add_post_meta( $this->post_id, 'post_domains', [ 'primary' => $this->primary_site_id ] );
 		wp_set_object_terms( $this->post_id, [ $this->default_site_id, $this->primary_site_id, $this->current_site_id ], $this->taxonomy );
 		$this->assertContains( 'primary-site.com', wp_get_canonical_url( $this->post_id ) );
+	}
+
+	public function test_site_term_links() {
+		$this->assertSame( 'http://primary-site.com/', get_term_link( $this->primary_site_id ) );
 	}
 }
