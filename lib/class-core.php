@@ -192,7 +192,7 @@ class Core {
 			&& is_object_in_taxonomy( $post->post_type, Site::instance()->name )
 		) {
 			$sites = self::get_sites_for_post( $post );
-			$allowed = in_array( $site_id, array_column( $sites, 'term_id' ), true );
+			$allowed = in_array( $site_id, wp_list_pluck( $sites, 'term_id' ), true );
 		} else {
 			// If the object isn't in the taxonomy, it's always allowed.
 			$allowed = true;
