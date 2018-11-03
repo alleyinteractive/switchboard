@@ -16,12 +16,14 @@ Switchboard lets your non-multisite WordPress site serve content across many dom
 = Requirements =
 
 * Requires PHP 5.4 or higher.
+* [Fieldmanager](https://github.com/alleyinteractive/wordpress-fieldmanager/)
 * You must be able to make changes to your `wp-config.php` file.
 
 == Installation ==
 
 1. Upload the plugin to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
+1. Upload [Fieldmanager](https://github.com/alleyinteractive/wordpress-fieldmanager/) to the plugins directory and activate it
 1. In your `wp-config.php` file, add the following block to allow your site to respond to arbitrary domains:
 
     ```
