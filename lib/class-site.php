@@ -34,6 +34,7 @@ class Site extends Taxonomy {
 		$this->object_types = apply_filters( 'switchboard_post_types', [ 'post', 'page' ] );
 		add_action( 'fm_post', [ $this, 'site_dropdown' ] );
 		add_action( 'fm_term_' . $this->name, [ $this, 'aliases_fields' ], 7 );
+		add_action( 'fm_term_' . $this->name, [ $this, 'domain_homepage_fields' ], 7 );
 		add_action( 'edited_' . $this->name, [ $this, 'update_cache' ] );
 		add_action( 'created_' . $this->name, [ $this, 'update_cache' ] );
 		add_action( 'delete_' . $this->name, [ $this, 'update_cache' ] );
@@ -50,7 +51,18 @@ class Site extends Taxonomy {
 
 		add_filter( 'term_link', [ $this, 'term_link' ], 10, 3 );
 
+		add_action( 'switchboard_taxonomy_registered', [ $this, 'register_option_overrides' ] );
+
 		parent::setup();
+	}
+
+	/**
+	 * Register the homepage options overrides.
+	 */
+	public function register_option_overrides() {
+		add_filter( 'pre_option_show_on_front', [ $this, 'homepage_options_overrides' ], 10, 2 );
+		add_filter( 'pre_option_page_on_front', [ $this, 'homepage_options_overrides' ], 10, 2 );
+		add_filter( 'pre_option_page_for_posts', [ $this, 'homepage_options_overrides' ], 10, 2 );
 	}
 
 	/**
@@ -179,7 +191,65 @@ class Site extends Taxonomy {
 				] ),
 			],
 		) );
-		$fm->add_term_meta_box( '', array( 'site-domain' ) );
+		$fm->add_term_meta_box( '', [ 'site-domain' ] );
+	}
+
+	/**
+	 * Create the UI for setting the domain homepage.
+	 */
+	public function domain_homepage_fields() {
+		$options = walk_page_dropdown_tree(
+			get_pages(),
+			0,
+			[
+				'walker' => new Walker_Page_Array(),
+			]
+		);
+		$options = '{' . rtrim( $options, ',' ) . '}';
+		$pages = json_decode( $options, true );
+
+		$fm = new \Fieldmanager_Group(
+			[
+				'name'           => 'homepage',
+				'label'          => __( 'Homepage', 'switchboard' ),
+				'serialize_data' => false,
+				'add_to_prefix'  => false,
+				'children'       => [
+					'show_on_front' => new \Fieldmanager_Radios(
+						[
+							'label'   => __( "This domain's homepage displays", 'switchboard' ),
+							'options' => [
+								'posts' => __( 'Latest posts', 'switchboard' ),
+								'page'  => __( 'A static page', 'switchboard' ),
+							],
+						]
+					),
+					'page_on_front' => new \Fieldmanager_Select(
+						[
+							'label'       => __( 'Homepage', 'switchboard' ),
+							'display_if'  => [
+								'src'   => 'show_on_front',
+								'value' => 'page',
+							],
+							'first_empty' => true,
+							'options'     => $pages,
+						]
+					),
+					'page_for_posts' => new \Fieldmanager_Select(
+						[
+							'label'       => __( 'Posts page', 'switchboard' ),
+							'display_if'  => [
+								'src'   => 'show_on_front',
+								'value' => 'page',
+							],
+							'first_empty' => true,
+							'options'     => $pages,
+						]
+					),
+				],
+			]
+		);
+		$fm->add_term_meta_box( '', [ 'site-domain' ] );
 	}
 
 	/**
@@ -319,5 +389,28 @@ class Site extends Taxonomy {
 		}
 
 		return $termlink;
+	}
+
+	/**
+	 * Override homepage options using options in the site terms.
+	 *
+	 * @param bool|mixed $pre_option The value to return instead of the option
+	 *                               value. This differs from `$default`, which
+	 *                               is used as the fallback value in the event
+	 *                               the option doesn't exist elsewhere in
+	 *                               get_option(). Default false (to skip past
+	 *                               the short-circuit).
+	 * @param string     $option     Option name.
+	 * @return bool|mixed
+	 */
+	public function homepage_options_overrides( $pre_option, $option ) {
+		$current_site_id = Core::get_current_site_id();
+		if ( $current_site_id ) {
+			$value = get_term_meta( $current_site_id, $option, true );
+			if ( '' !== $value ) {
+				return $value;
+			}
+		}
+		return $pre_option;
 	}
 }
