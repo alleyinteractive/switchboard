@@ -262,6 +262,16 @@ class Core {
 	}
 
 	/**
+	 * Get the current site's term ID.
+	 *
+	 * @return int|bool Term ID on success, false if the current site is unknown.
+	 */
+	public static function get_current_site_id() {
+		$current_site = self::get_current_site_from_cache();
+		return ! empty( $current_site['term_id'] ) ? $current_site['term_id'] : false;
+	}
+
+	/**
 	 * Redirect to the canonical version of the current url if the site is not
 	 * correct.
 	 */

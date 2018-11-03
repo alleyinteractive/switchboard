@@ -51,7 +51,18 @@ class Site extends Taxonomy {
 
 		add_filter( 'term_link', [ $this, 'term_link' ], 10, 3 );
 
+		add_action( 'switchboard_taxonomy_registered', [ $this, 'register_option_overrides' ] );
+
 		parent::setup();
+	}
+
+	/**
+	 * Register the homepage options overrides.
+	 */
+	public function register_option_overrides() {
+		add_filter( 'pre_option_show_on_front', [ $this, 'homepage_options_overrides' ], 10, 2 );
+		add_filter( 'pre_option_page_on_front', [ $this, 'homepage_options_overrides' ], 10, 2 );
+		add_filter( 'pre_option_page_for_posts', [ $this, 'homepage_options_overrides' ], 10, 2 );
 	}
 
 	/**
@@ -378,5 +389,28 @@ class Site extends Taxonomy {
 		}
 
 		return $termlink;
+	}
+
+	/**
+	 * Override homepage options using options in the site terms.
+	 *
+	 * @param bool|mixed $pre_option The value to return instead of the option
+	 *                               value. This differs from `$default`, which
+	 *                               is used as the fallback value in the event
+	 *                               the option doesn't exist elsewhere in
+	 *                               get_option(). Default false (to skip past
+	 *                               the short-circuit).
+	 * @param string     $option     Option name.
+	 * @return bool|mixed
+	 */
+	public function homepage_options_overrides( $pre_option, $option ) {
+		$current_site_id = Core::get_current_site_id();
+		if ( $current_site_id ) {
+			$value = get_term_meta( $current_site_id, $option, true );
+			if ( '' !== $value ) {
+				return $value;
+			}
+		}
+		return $pre_option;
 	}
 }
