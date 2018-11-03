@@ -34,6 +34,7 @@ class Site extends Taxonomy {
 		$this->object_types = apply_filters( 'switchboard_post_types', [ 'post', 'page' ] );
 		add_action( 'fm_post', [ $this, 'site_dropdown' ] );
 		add_action( 'fm_term_' . $this->name, [ $this, 'aliases_fields' ], 7 );
+		add_action( 'fm_term_' . $this->name, [ $this, 'domain_homepage_fields' ], 7 );
 		add_action( 'edited_' . $this->name, [ $this, 'update_cache' ] );
 		add_action( 'created_' . $this->name, [ $this, 'update_cache' ] );
 		add_action( 'delete_' . $this->name, [ $this, 'update_cache' ] );
@@ -179,7 +180,65 @@ class Site extends Taxonomy {
 				] ),
 			],
 		) );
-		$fm->add_term_meta_box( '', array( 'site-domain' ) );
+		$fm->add_term_meta_box( '', [ 'site-domain' ] );
+	}
+
+	/**
+	 * Create the UI for setting the domain homepage.
+	 */
+	public function domain_homepage_fields() {
+		$options = walk_page_dropdown_tree(
+			get_pages(),
+			0,
+			[
+				'walker' => new Walker_Page_Array(),
+			]
+		);
+		$options = '{' . rtrim( $options, ',' ) . '}';
+		$pages = json_decode( $options, true );
+
+		$fm = new \Fieldmanager_Group(
+			[
+				'name'           => 'homepage',
+				'label'          => __( 'Homepage', 'switchboard' ),
+				'serialize_data' => false,
+				'add_to_prefix'  => false,
+				'children'       => [
+					'show_on_front' => new \Fieldmanager_Radios(
+						[
+							'label'   => __( "This domain's homepage displays", 'switchboard' ),
+							'options' => [
+								'posts' => __( 'Latest posts', 'switchboard' ),
+								'page'  => __( 'A static page', 'switchboard' ),
+							],
+						]
+					),
+					'page_on_front' => new \Fieldmanager_Select(
+						[
+							'label'       => __( 'Homepage', 'switchboard' ),
+							'display_if'  => [
+								'src'   => 'show_on_front',
+								'value' => 'page',
+							],
+							'first_empty' => true,
+							'options'     => $pages,
+						]
+					),
+					'page_for_posts' => new \Fieldmanager_Select(
+						[
+							'label'       => __( 'Posts page', 'switchboard' ),
+							'display_if'  => [
+								'src'   => 'show_on_front',
+								'value' => 'page',
+							],
+							'first_empty' => true,
+							'options'     => $pages,
+						]
+					),
+				],
+			]
+		);
+		$fm->add_term_meta_box( '', [ 'site-domain' ] );
 	}
 
 	/**
