@@ -90,30 +90,34 @@ class Site extends Taxonomy {
 	 * Create the taxonomy.
 	 */
 	public function create_taxonomy() {
-		register_taxonomy( $this->name, $this->object_types, [
-			'labels' => [
-				'name'                  => __( 'Sites', 'switchboard' ),
-				'singular_name'         => __( 'Site', 'switchboard' ),
-				'search_items'          => __( 'Search Sites', 'switchboard' ),
-				'popular_items'         => __( 'Popular Sites', 'switchboard' ),
-				'all_items'             => __( 'All Sites', 'switchboard' ),
-				'parent_item'           => __( 'Parent Site', 'switchboard' ),
-				'parent_item_colon'     => __( 'Parent Site', 'switchboard' ),
-				'edit_item'             => __( 'Edit Site', 'switchboard' ),
-				'view_item'             => __( 'View Site', 'switchboard' ),
-				'update_item'           => __( 'Update Site', 'switchboard' ),
-				'add_new_item'          => __( 'Add New Site', 'switchboard' ),
-				'new_item_name'         => __( 'New Site Name', 'switchboard' ),
-				'add_or_remove_items'   => __( 'Add or remove Sites', 'switchboard' ),
-				'choose_from_most_used' => __( 'Choose from most used Sites', 'switchboard' ),
-				'menu_name'             => __( 'Sites', 'switchboard' ),
-			],
-			'rewrite' => false,
-			'show_ui' => true,
-			'show_tagcloud' => false,
-			'show_admin_column' => true,
-			'show_in_menu' => false,
-		] );
+		register_taxonomy(
+			$this->name,
+			$this->object_types,
+			[
+				'labels'            => [
+					'name'                  => __( 'Sites', 'switchboard' ),
+					'singular_name'         => __( 'Site', 'switchboard' ),
+					'search_items'          => __( 'Search Sites', 'switchboard' ),
+					'popular_items'         => __( 'Popular Sites', 'switchboard' ),
+					'all_items'             => __( 'All Sites', 'switchboard' ),
+					'parent_item'           => __( 'Parent Site', 'switchboard' ),
+					'parent_item_colon'     => __( 'Parent Site', 'switchboard' ),
+					'edit_item'             => __( 'Edit Site', 'switchboard' ),
+					'view_item'             => __( 'View Site', 'switchboard' ),
+					'update_item'           => __( 'Update Site', 'switchboard' ),
+					'add_new_item'          => __( 'Add New Site', 'switchboard' ),
+					'new_item_name'         => __( 'New Site Name', 'switchboard' ),
+					'add_or_remove_items'   => __( 'Add or remove Sites', 'switchboard' ),
+					'choose_from_most_used' => __( 'Choose from most used Sites', 'switchboard' ),
+					'menu_name'             => __( 'Sites', 'switchboard' ),
+				],
+				'rewrite'           => false,
+				'show_ui'           => true,
+				'show_tagcloud'     => false,
+				'show_admin_column' => true,
+				'show_in_menu'      => false,
+			]
+		);
 
 		do_action( 'switchboard_taxonomy_registered', $this->name );
 	}
@@ -131,26 +135,36 @@ class Site extends Taxonomy {
 			return;
 		}
 
-		$fm = new \Fieldmanager_Group( [
-			'name' => 'post_domains',
-			'children' => [
-				'allowed' => new \Fieldmanager_Checkboxes( [
-					'label' => __( 'Allow on these domains:', 'switchboard' ),
-					'remove_default_meta_boxes' => true,
-					'datasource' => new \Fieldmanager_Datasource_Term( [
-						'taxonomy' => $this->name,
-						'only_save_to_taxonomy' => true,
-					] ),
-				] ),
-				'primary' => new \Fieldmanager_Select( [
-					'label' => __( 'Primary Domain:', 'switchboard' ),
-					'default_value' => Settings::instance()->get_setting( 'default' ),
-					'datasource' => new \Fieldmanager_Datasource_Term( [
-						'taxonomy' => $this->name,
-					] ),
-				] ),
-			],
-		] );
+		$fm = new \Fieldmanager_Group(
+			[
+				'name'     => 'post_domains',
+				'children' => [
+					'allowed' => new \Fieldmanager_Checkboxes(
+						[
+							'label'                     => __( 'Allow on these domains:', 'switchboard' ),
+							'remove_default_meta_boxes' => true,
+							'datasource'                => new \Fieldmanager_Datasource_Term(
+								[
+									'taxonomy'              => $this->name,
+									'only_save_to_taxonomy' => true,
+								]
+							),
+						]
+					),
+					'primary' => new \Fieldmanager_Select(
+						[
+							'label'         => __( 'Primary Domain:', 'switchboard' ),
+							'default_value' => Settings::instance()->get_setting( 'default' ),
+							'datasource'    => new \Fieldmanager_Datasource_Term(
+								[
+									'taxonomy' => $this->name,
+								]
+							),
+						]
+					),
+				],
+			]
+		);
 		$fm->add_meta_box( __( 'Site', 'switchboard' ), $this->object_types, 'side', 'high' );
 	}
 
@@ -158,27 +172,34 @@ class Site extends Taxonomy {
 	 * Create the UI for domain aliases.
 	 */
 	public function aliases_fields() {
-		$fm = new \Fieldmanager_Group( array(
-			'name' => 'aliases_wrapper',
-			'label' => __( 'Domain Aliases', 'switchboard' ),
-			'description' => __( 'Domain aliases will automatically get redirected to the domain. For example, you could add an alias "www.domain.com" for the domain "domain.com" to redirect all pages on www.domain.com to domain.com.', 'switchboard' ),
-			'serialize_data' => false,
-			'add_to_prefix' => false,
-			'children' => [
-				'alias' => new \Fieldmanager_TextField( [
-					'serialize_data' => false,
-					'one_label_per_item' => false,
-					'limit' => 0,
-					'extra_elements' => 0,
-					'add_more_label' => __( 'Add a domain alias', 'switchboard' ),
-					'sanitize' => [ $this, 'validate_domain' ],
-					'attributes' => [
-						'placeholder' => 'www.domain.com',
-						'size' => 50,
-					],
-				] ),
-			],
-		) );
+		$fm = new \Fieldmanager_Group(
+			[
+				'name'           => 'aliases_wrapper',
+				'label'          => __( 'Domain Aliases', 'switchboard' ),
+				'description'    => __( 'Domain aliases will automatically get redirected to the domain. For example, you could add an alias "www.domain.com" for the domain "domain.com" to redirect all pages on www.domain.com to domain.com.', 'switchboard' ),
+				'serialize_data' => false,
+				'add_to_prefix'  => false,
+				'children'       => [
+					'alias' => new \Fieldmanager_TextField(
+						[
+							'serialize_data'     => false,
+							'one_label_per_item' => false,
+							'limit'              => 0,
+							'extra_elements'     => 0,
+							'add_more_label'     => __( 'Add a domain alias', 'switchboard' ),
+							'sanitize'           => [
+								$this,
+								'validate_domain',
+							],
+							'attributes'         => [
+								'placeholder' => 'www.domain.com',
+								'size'        => 50,
+							],
+						]
+					),
+				],
+			]
+		);
 		$fm->add_term_meta_box( '', array( 'site-domain' ) );
 	}
 
@@ -186,10 +207,12 @@ class Site extends Taxonomy {
 	 * Update the site cache when terms are modified.
 	 */
 	public function update_cache() {
-		$terms = get_terms( [
-			'taxonomy'   => $this->name,
-			'hide_empty' => false,
-		] );
+		$terms = get_terms(
+			[
+				'taxonomy'   => $this->name,
+				'hide_empty' => false,
+			]
+		);
 
 		if ( ! $terms || is_wp_error( $terms ) ) {
 			return;

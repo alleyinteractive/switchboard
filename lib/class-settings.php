@@ -26,7 +26,13 @@ class Settings {
 	public function setup() {
 		add_action( 'fm_submenu_site_domain_settings', [ $this, 'fields' ] );
 		if ( function_exists( 'fm_register_submenu_page' ) ) {
-			fm_register_submenu_page( $this->option_name, 'switchboard', __( 'Site Domain Settings', 'switchboard' ), __( 'Settings', 'switchboard' ), 'manage_options' );
+			fm_register_submenu_page(
+				$this->option_name,
+				'switchboard',
+				__( 'Site Domain Settings', 'switchboard' ),
+				__( 'Settings', 'switchboard' ),
+				'manage_options'
+			);
 		}
 	}
 
@@ -34,19 +40,25 @@ class Settings {
 	 * `site_domain_settings` Fieldmanager fields.
 	 */
 	public function fields() {
-		$children = array(
-			'default' => new \Fieldmanager_Select( array(
-				'label' => __( 'Default Domain', 'switchboard' ),
-				'datasource' => new \Fieldmanager_Datasource_Term( array(
-					'taxonomy' => Site::instance()->name,
-				) ),
-			) ),
-		);
+		$children = [
+			'default' => new \Fieldmanager_Select(
+				[
+					'label'      => __( 'Default Domain', 'switchboard' ),
+					'datasource' => new \Fieldmanager_Datasource_Term(
+						[
+							'taxonomy' => Site::instance()->name,
+						]
+					),
+				]
+			),
+		];
 
-		$fm = new \Fieldmanager_Group( array(
-			'name' => $this->option_name,
-			'children' => apply_filters( 'site_domain_settings_children_fields', $children ),
-		) );
+		$fm = new \Fieldmanager_Group(
+			[
+				'name'     => $this->option_name,
+				'children' => apply_filters( 'site_domain_settings_children_fields', $children ),
+			]
+		);
 		$fm->activate_submenu_page();
 	}
 
