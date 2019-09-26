@@ -26,6 +26,9 @@ require_once( PATH . '/lib/trait-singleton.php' );
 // Helper functions for use in themes/plugins.
 require_once( PATH . '/lib/functions.php' );
 
+// Compatibility hacks... er, additions... to play nice with other plugins.
+require_once( PATH . '/lib/compat.php' );
+
 // Setup actions to autoload everything else.
 add_action( 'after_setup_theme', [ '\Switchboard\Core', 'instance' ] );
 add_action( 'after_setup_theme', [ '\Switchboard\Site', 'instance' ] );
