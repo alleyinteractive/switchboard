@@ -375,8 +375,15 @@ class Core {
 			return;
 		}
 
+		$this->redirect_to_default_domain();
+	}
+
+	/**
+	 * Redirect the current request to the default domain.
+	 */
+	public function redirect_to_default_domain() {
 		$site = $this->get_default_site();
-		if ( ! empty( $site->name ) ) { // WPCS: sanitization ok.
+		if ( ! empty( $site->name ) ) {
 			self::redirect_to_domain( $site->name );
 		}
 	}
