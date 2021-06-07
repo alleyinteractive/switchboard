@@ -34,3 +34,4 @@ add_action( 'after_setup_theme', [ '\Switchboard\Core', 'instance' ] );
 add_action( 'after_setup_theme', [ '\Switchboard\Site', 'instance' ] );
 add_action( 'after_setup_theme', [ '\Switchboard\Templates', 'instance' ] );
 add_action( 'after_setup_theme', [ '\Switchboard\Settings', 'instance' ] );
+add_action( 'after_setup_theme', [ '\Switchboard\Cache', 'instance' ] );
